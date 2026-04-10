@@ -68,7 +68,7 @@ export function SettingsStripe({ org }: SettingsStripeProps) {
         {connected ? (
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="bg-green-100 text-green-700">
+              <Badge variant="secondary" className="bg-green-50 text-green-700">
                 Connected
               </Badge>
               <span className="text-sm text-muted-foreground">
@@ -107,7 +107,6 @@ export function SettingsStripe({ org }: SettingsStripeProps) {
                 size="sm"
                 onClick={handleConnect}
                 disabled={loading}
-                className="bg-indigo-600 text-white hover:bg-indigo-700"
               >
                 <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
                 Continue Setup
@@ -118,7 +117,6 @@ export function SettingsStripe({ org }: SettingsStripeProps) {
           <Button
             onClick={handleConnect}
             disabled={loading}
-            className="bg-indigo-600 text-white hover:bg-indigo-700"
           >
             {loading ? "Connecting..." : "Connect Stripe Account"}
           </Button>

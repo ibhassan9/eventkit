@@ -74,7 +74,7 @@ export function BadgePreview({ config }: BadgePreviewProps) {
 
   return (
     <div
-      className="flex items-center justify-center rounded-lg border bg-zinc-100 p-6"
+      className="flex items-center justify-center rounded-lg border bg-stone-100 p-6"
       style={{
         minHeight: `${config.height * scale + 48}px`,
       }}

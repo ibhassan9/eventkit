@@ -8,7 +8,7 @@ export default function OnboardingLoading() {
           <Skeleton className="mx-auto h-8 w-64" />
           <Skeleton className="mx-auto h-4 w-80" />
         </div>
-        <div className="rounded-xl border bg-card p-6 shadow-sm">
+        <div className="rounded-xl border border-stone-200 bg-card p-6">
           <Skeleton className="mb-4 h-6 w-40" />
           <div className="space-y-4">
             <div className="space-y-2">

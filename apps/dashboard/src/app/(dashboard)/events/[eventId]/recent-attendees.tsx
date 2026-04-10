@@ -35,10 +35,10 @@ interface RecentAttendeesProps {
 }
 
 const paymentStatusStyles: Record<string, string> = {
-  paid: "bg-green-100 text-green-700",
-  free: "bg-blue-100 text-blue-700",
-  pending: "bg-amber-100 text-amber-700",
-  refunded: "bg-red-100 text-red-700",
+  paid: "bg-green-50 text-green-700",
+  free: "bg-stone-100 text-stone-700",
+  pending: "bg-amber-50 text-amber-700",
+  refunded: "bg-red-50 text-red-700",
 };
 
 export function RecentAttendees({ attendees, eventId }: RecentAttendeesProps) {
@@ -46,9 +46,7 @@ export function RecentAttendees({ attendees, eventId }: RecentAttendeesProps) {
     return (
       <Card>
         <CardContent className="flex flex-col items-center py-12">
-          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100">
-            <Users className="h-6 w-6 text-zinc-400" />
-          </div>
+          <Users className="mb-3 h-12 w-12 text-stone-300" />
           <p className="text-sm font-medium">No attendees yet</p>
           <p className="text-xs text-muted-foreground">
             Share your event registration link to get started.
@@ -74,7 +72,7 @@ export function RecentAttendees({ attendees, eventId }: RecentAttendeesProps) {
       <CardContent>
         <Table>
           <TableHeader>
-            <TableRow className="bg-zinc-50">
+            <TableRow className="bg-stone-50">
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Status</TableHead>

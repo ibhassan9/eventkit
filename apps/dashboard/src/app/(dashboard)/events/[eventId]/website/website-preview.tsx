@@ -69,7 +69,7 @@ function PreviewSection({
           <h2 className="mb-3 text-lg font-semibold" style={{ color: primaryColor }}>
             About
           </h2>
-          <p className="whitespace-pre-line text-xs leading-relaxed text-zinc-600">
+          <p className="whitespace-pre-line text-xs leading-relaxed text-stone-600">
             {section.data.content}
           </p>
         </div>
@@ -86,7 +86,7 @@ function PreviewSection({
                 <span className="font-medium" style={{ color: secondaryColor }}>
                   {item.time}
                 </span>
-                <span className="text-zinc-700">{item.title}</span>
+                <span className="text-stone-700">{item.title}</span>
               </div>
             ))}
           </div>
@@ -101,8 +101,8 @@ function PreviewSection({
           <div className="grid grid-cols-2 gap-3">
             {section.data.speakers.map((speaker, i) => (
               <div key={i} className="text-xs">
-                <p className="font-medium text-zinc-900">{speaker.name}</p>
-                <p className="text-zinc-500">
+                <p className="font-medium text-stone-900">{speaker.name}</p>
+                <p className="text-stone-500">
                   {speaker.title}
                   {speaker.company ? `, ${speaker.company}` : ""}
                 </p>
@@ -117,10 +117,10 @@ function PreviewSection({
           <h2 className="mb-3 text-lg font-semibold" style={{ color: primaryColor }}>
             Location
           </h2>
-          <p className="text-xs font-medium text-zinc-900">
+          <p className="text-xs font-medium text-stone-900">
             {section.data.venue}
           </p>
-          <p className="text-xs text-zinc-500">{section.data.address}</p>
+          <p className="text-xs text-stone-500">{section.data.address}</p>
         </div>
       );
     case "faq":
@@ -132,8 +132,8 @@ function PreviewSection({
           <div className="space-y-2">
             {section.data.items.map((item, i) => (
               <div key={i} className="text-xs">
-                <p className="font-medium text-zinc-900">{item.question}</p>
-                <p className="text-zinc-500">{item.answer}</p>
+                <p className="font-medium text-stone-900">{item.question}</p>
+                <p className="text-stone-500">{item.answer}</p>
               </div>
             ))}
           </div>

@@ -59,7 +59,7 @@ export function OnboardingForm() {
         <CardHeader>
           <CardTitle>Organization Details</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-5">
           <div className="space-y-2">
             <Label htmlFor="name">Organization Name</Label>
             <Input
@@ -93,7 +93,7 @@ export function OnboardingForm() {
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-indigo-600 text-white hover:bg-indigo-700"
+            className="w-full"
           >
             {isSubmitting ? "Creating..." : "Create Organization"}
           </Button>

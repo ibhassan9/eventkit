@@ -1,10 +1,3 @@
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@eventkit/ui/card";
-import { Users, DollarSign, ClipboardCheck, TicketIcon } from "lucide-react";
 import { formatCurrency } from "@eventkit/lib/utils";
 
 interface EventOverviewStatsProps {
@@ -26,51 +19,39 @@ export function EventOverviewStats({
     {
       label: "Total Registered",
       value: totalAttendees.toLocaleString(),
-      icon: Users,
-      iconColor: "text-indigo-600",
-      iconBg: "bg-indigo-50",
+      context: null,
     },
     {
       label: "Total Revenue",
       value: formatCurrency(totalRevenue, currency),
-      icon: DollarSign,
-      iconColor: "text-green-600",
-      iconBg: "bg-green-50",
+      context: null,
     },
     {
       label: "Check-in Rate",
       value: `${checkInRate}%`,
-      icon: ClipboardCheck,
-      iconColor: "text-blue-600",
-      iconBg: "bg-blue-50",
+      context: `of ${totalAttendees} attendees`,
     },
     {
       label: "Tickets Remaining",
       value: ticketsRemaining !== null ? ticketsRemaining.toLocaleString() : "Unlimited",
-      icon: TicketIcon,
-      iconColor: "text-amber-600",
-      iconBg: "bg-amber-50",
+      context: ticketsRemaining !== null ? "of total capacity" : null,
     },
   ];
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {stats.map((stat) => (
-        <Card key={stat.label}>
-          <CardHeader className="flex flex-row items-center gap-3 pb-0">
-            <div
-              className={`flex h-10 w-10 items-center justify-center rounded-lg ${stat.iconBg}`}
-            >
-              <stat.icon className={`h-5 w-5 ${stat.iconColor}`} />
-            </div>
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              {stat.label}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{stat.value}</p>
-          </CardContent>
-        </Card>
+        <div key={stat.label} className="rounded-xl border border-stone-200 bg-white p-5">
+          <p className="text-xs font-medium uppercase tracking-wide text-stone-400">
+            {stat.label}
+          </p>
+          <p className="mt-1 text-[28px] font-semibold text-stone-900">
+            {stat.value}
+          </p>
+          {stat.context && (
+            <p className="mt-0.5 text-xs text-stone-400">{stat.context}</p>
+          )}
+        </div>
       ))}
     </div>
   );

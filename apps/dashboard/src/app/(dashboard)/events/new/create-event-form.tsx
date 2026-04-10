@@ -66,7 +66,7 @@ export function CreateEventForm() {
         <CardHeader>
           <CardTitle>Event Details</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-5">
           <EventFormFields
             register={register}
             errors={errors}
@@ -94,7 +94,6 @@ export function CreateEventForm() {
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="bg-indigo-600 text-white hover:bg-indigo-700"
           >
             {isSubmitting ? "Creating..." : "Create Event"}
           </Button>

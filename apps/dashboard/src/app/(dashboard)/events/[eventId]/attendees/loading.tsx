@@ -17,7 +17,7 @@ export default function AttendeesLoading() {
         ))}
       </div>
       <div className="rounded-xl border bg-card">
-        <div className="border-b bg-zinc-50 px-3 py-2">
+        <div className="border-b bg-stone-50 px-3 py-2">
           <div className="flex gap-8">
             {[1, 2, 3, 4, 5, 6, 7].map((i) => (
               <Skeleton key={i} className="h-4 w-20" />
