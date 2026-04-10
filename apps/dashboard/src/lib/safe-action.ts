@@ -1,5 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
-import type { z } from "zod";
+import { type z } from "zod";
 import type { ActionResult } from "@eventkit/types";
 import { getOrganizationByClerkUserId } from "@eventkit/db/queries";
 
@@ -35,6 +35,59 @@ export function createSafeAction<TInput, TOutput>(
         organizationId: org.id,
       });
 
+      return { success: true, data: result };
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "An unexpected error occurred";
+      return { success: false, error: message };
+    }
+  };
+}
+
+export function createSafeQuery<TOutput>(
+  handler: (ctx: { userId: string; organizationId: string }) => Promise<TOutput>
+): () => Promise<ActionResult<TOutput>> {
+  return async () => {
+    try {
+      const { userId } = await auth();
+      if (!userId) return { success: false, error: "Unauthorized" };
+      const org = await getOrganizationByClerkUserId(userId);
+      if (!org) return { success: false, error: "Organization not found" };
+      const result = await handler({ userId, organizationId: org.id });
+      return { success: true, data: result };
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "An unexpected error occurred";
+      return { success: false, error: message };
+    }
+  };
+}
+
+export function createSafeQueryWithInput<TInput, TOutput>(
+  schema: z.ZodSchema<TInput>,
+  handler: (
+    input: TInput,
+    ctx: { userId: string; organizationId: string }
+  ) => Promise<TOutput>
+): (input: TInput) => Promise<ActionResult<TOutput>> {
+  return async (rawInput: TInput) => {
+    try {
+      const { userId } = await auth();
+      if (!userId) return { success: false, error: "Unauthorized" };
+      const parsed = schema.safeParse(rawInput);
+      if (!parsed.success) {
+        const firstError = parsed.error.issues[0];
+        return {
+          success: false,
+          error: firstError?.message ?? "Invalid input",
+        };
+      }
+      const org = await getOrganizationByClerkUserId(userId);
+      if (!org) return { success: false, error: "Organization not found" };
+      const result = await handler(parsed.data, {
+        userId,
+        organizationId: org.id,
+      });
       return { success: true, data: result };
     } catch (error) {
       const message =

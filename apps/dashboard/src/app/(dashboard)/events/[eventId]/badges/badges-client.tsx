@@ -2,74 +2,107 @@
 
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
-import { Plus, ArrowLeft } from "lucide-react";
+import { Plus, ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@eventkit/ui/button";
 import { Card, CardContent } from "@eventkit/ui/card";
 import { BadgeDesigner } from "@/components/badge-designer/badge-designer";
 import { BADGE_PRESETS } from "@/components/badge-designer/preset-configs";
 import type { BadgeConfig } from "@eventkit/types";
-import { saveBadgeTemplate, deleteBadgeTemplateAction } from "./actions";
+import { useBadgeTemplates } from "@/hooks/use-badge-templates";
+import {
+  saveBadgeTemplate,
+  deleteBadgeTemplateAction,
+} from "./actions";
 import { generateBadgeDesign } from "./generate-action";
 import { BadgeTemplateCard } from "./badge-template-card";
 
-interface BadgeTemplate {
-  id: string;
-  name: string;
-  config: BadgeConfig;
-  isDefault: boolean;
-}
-
 interface BadgesClientProps {
   eventId: string;
-  initialTemplates: BadgeTemplate[];
 }
 
-export function BadgesClient({ eventId, initialTemplates }: BadgesClientProps) {
-  const router = useRouter();
-  const [templates, setTemplates] = useState(initialTemplates);
+export function BadgesClient({ eventId }: BadgesClientProps) {
+  const {
+    data: templates,
+    isLoading,
+    error,
+    refetch,
+  } = useBadgeTemplates(eventId);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
-  const editing = editingId ? templates.find((t) => t.id === editingId) : null;
+  const editing = editingId
+    ? templates?.find((t) => t.id === editingId)
+    : null;
 
-  const handleSave = useCallback(async (data: {
-    eventId: string; templateId?: string; name: string; config: BadgeConfig;
-  }) => {
-    const result = await saveBadgeTemplate(data);
-    if (result.success && result.data) {
-      const s = result.data;
-      const entry = { id: s.id, name: s.name, config: s.config, isDefault: s.isDefault };
-      setTemplates((prev) =>
-        prev.some((t) => t.id === s.id) ? prev.map((t) => (t.id === s.id ? entry : t)) : [...prev, entry]
-      );
-      setEditingId(s.id);
-      setIsCreating(false);
-    }
-    return result;
-  }, []);
+  const handleSave = useCallback(
+    async (data: {
+      eventId: string;
+      templateId?: string;
+      name: string;
+      config: BadgeConfig;
+    }) => {
+      const result = await saveBadgeTemplate(data);
+      if (result.success && result.data) {
+        setEditingId(result.data.id);
+        setIsCreating(false);
+        refetch();
+      }
+      return result;
+    },
+    [refetch]
+  );
 
-  const handleDelete = useCallback(async (id: string) => {
-    const result = await deleteBadgeTemplateAction({ eventId, templateId: id });
-    if (result.success) {
-      setTemplates((prev) => prev.filter((t) => t.id !== id));
-      toast.success("Badge template deleted");
-    } else {
-      toast.error(result.error ?? "Failed to delete");
-    }
-  }, [eventId]);
+  const handleDelete = useCallback(
+    async (id: string) => {
+      const result = await deleteBadgeTemplateAction({
+        eventId,
+        templateId: id,
+      });
+      if (result.success) {
+        toast.success("Badge template deleted");
+        refetch();
+      } else {
+        toast.error(result.error ?? "Failed to delete");
+      }
+    },
+    [eventId, refetch]
+  );
 
-  const handleGenerateAI = useCallback(async (data: { eventId: string }) => {
-    return generateBadgeDesign({ eventId: data.eventId });
-  }, []);
+  const handleGenerateAI = useCallback(
+    async (data: { eventId: string }) => {
+      return generateBadgeDesign({ eventId: data.eventId });
+    },
+    []
+  );
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="py-24 text-center text-sm text-destructive">
+        Failed to load badge templates. Please try again.
+      </div>
+    );
+  }
 
   if (editing || isCreating) {
     return (
       <div>
-        <Button variant="ghost" size="sm" className="mb-4" onClick={() => {
-          setEditingId(null);
-          setIsCreating(false);
-          router.refresh();
-        }}>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="mb-4"
+          onClick={() => {
+            setEditingId(null);
+            setIsCreating(false);
+            refetch();
+          }}
+        >
           <ArrowLeft className="mr-1.5 h-4 w-4" />
           Back to templates
         </Button>
@@ -85,7 +118,7 @@ export function BadgesClient({ eventId, initialTemplates }: BadgesClientProps) {
     );
   }
 
-  if (templates.length === 0) {
+  if (!templates || templates.length === 0) {
     return (
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-12">

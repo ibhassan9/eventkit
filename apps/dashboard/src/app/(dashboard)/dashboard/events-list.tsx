@@ -9,26 +9,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@eventkit/ui/card";
-import { Plus, CalendarDays, Users } from "lucide-react";
+import { Plus, CalendarDays, Users, Loader2 } from "lucide-react";
 import { formatDateRange } from "@eventkit/lib/utils";
 import { EventsEmptyState } from "./events-empty-state";
-
-interface EventData {
-  id: string;
-  name: string;
-  slug: string;
-  status: "draft" | "published" | "completed" | "cancelled";
-  startDate: Date | string;
-  endDate: Date | string;
-  timezone: string;
-  currency: string;
-  attendees: { id: string }[];
-}
-
-interface EventsListProps {
-  events: EventData[];
-  currency: string;
-}
+import { useEvents } from "@/hooks/use-events";
 
 const statusConfig: Record<
   string,
@@ -40,8 +24,26 @@ const statusConfig: Record<
   cancelled: { label: "Cancelled", className: "bg-red-100 text-red-700" },
 };
 
-export function EventsList({ events }: EventsListProps) {
-  if (events.length === 0) {
+export function EventsList() {
+  const { data: events, isLoading, error } = useEvents();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="py-24 text-center text-sm text-destructive">
+        Failed to load events. Please try again.
+      </div>
+    );
+  }
+
+  if (!events || events.length === 0) {
     return <EventsEmptyState />;
   }
 

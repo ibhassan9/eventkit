@@ -4,6 +4,7 @@ import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@eventkit/ui/button";
 import {
   Card,
@@ -14,6 +15,7 @@ import {
 } from "@eventkit/ui/card";
 import { createEventSchema, type CreateEventInput } from "@eventkit/lib/validators";
 import { slugify } from "@eventkit/lib/utils";
+import { queryKeys } from "@/lib/query-keys";
 import { createNewEvent } from "./actions";
 import { EventFormFields } from "./event-form-fields";
 import { TimezoneSelect } from "./timezone-select";
@@ -21,6 +23,7 @@ import { CurrencySelect } from "./currency-select";
 
 export function CreateEventForm() {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const {
     register,
@@ -49,6 +52,7 @@ export function CreateEventForm() {
       slug: slugify(data.name),
     });
     if (result.success) {
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
       toast.success("Event created successfully");
       router.push(`/events/${result.data.id}`);
     } else {
