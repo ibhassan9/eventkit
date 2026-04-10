@@ -1,0 +1,52 @@
+{
+  "name": "@eventkit/dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack --port 3001",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@eventkit/db": "workspace:*",
+    "@eventkit/emails": "workspace:*",
+    "@eventkit/lib": "workspace:*",
+    "@eventkit/types": "workspace:*",
+    "@eventkit/ui": "workspace:*",
+    "@clerk/nextjs": "^6.39.1",
+    "@hookform/resolvers": "^5.2.2",
+    "@tiptap/extension-image": "^3.22.3",
+    "@tiptap/extension-link": "^3.22.3",
+    "@tiptap/extension-placeholder": "^3.22.3",
+    "@tiptap/extension-text-align": "^3.22.3",
+    "@tiptap/extension-underline": "^3.22.3",
+    "@tiptap/pm": "^3.22.3",
+    "@tiptap/react": "^3.22.3",
+    "@tiptap/starter-kit": "^3.22.3",
+    "@uploadthing/react": "^7.3.3",
+    "date-fns": "^4.1.0",
+    "html5-qrcode": "^2.3.8",
+    "lucide-react": "^1.8.0",
+    "next": "15.5.15",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "react-hook-form": "^7.72.1",
+    "sonner": "^2.0.7",
+    "uploadthing": "^7.7.4",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@eventkit/eslint-config": "workspace:*",
+    "@eventkit/tailwind-config": "workspace:*",
+    "@eventkit/tsconfig": "workspace:*",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

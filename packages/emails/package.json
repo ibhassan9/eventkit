@@ -1,0 +1,39 @@
+{
+  "name": "@eventkit/emails",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./confirmation": {
+      "types": "./src/confirmation.tsx",
+      "default": "./src/confirmation.tsx"
+    },
+    "./reminder": {
+      "types": "./src/reminder.tsx",
+      "default": "./src/reminder.tsx"
+    },
+    "./custom": {
+      "types": "./src/custom.tsx",
+      "default": "./src/custom.tsx"
+    },
+    "./styles": {
+      "types": "./src/styles.ts",
+      "default": "./src/styles.ts"
+    }
+  },
+  "dependencies": {
+    "@react-email/components": "^1.0.12"
+  },
+  "devDependencies": {
+    "@eventkit/tsconfig": "workspace:*",
+    "@types/react": "^19",
+    "typescript": "^5"
+  },
+  "peerDependencies": {
+    "react": "^19"
+  }
+}

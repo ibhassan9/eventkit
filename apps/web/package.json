@@ -1,0 +1,32 @@
+{
+  "name": "@eventkit/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack --port 3000",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@eventkit/lib": "workspace:*",
+    "@eventkit/types": "workspace:*",
+    "@eventkit/ui": "workspace:*",
+    "next": "15.5.15",
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
+  },
+  "devDependencies": {
+    "@eventkit/eslint-config": "workspace:*",
+    "@eventkit/tailwind-config": "workspace:*",
+    "@eventkit/tsconfig": "workspace:*",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

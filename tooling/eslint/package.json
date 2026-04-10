@@ -1,0 +1,16 @@
+{
+  "name": "@eventkit/eslint-config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./nextjs": "./nextjs.mjs"
+  },
+  "dependencies": {
+    "@eslint/eslintrc": "^3",
+    "eslint-config-next": "15.5.15"
+  },
+  "peerDependencies": {
+    "eslint": "^9"
+  }
+}
