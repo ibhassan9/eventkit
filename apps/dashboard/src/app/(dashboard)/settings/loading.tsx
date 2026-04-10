@@ -8,7 +8,7 @@ export default function SettingsLoading() {
         <Skeleton className="mt-2 h-4 w-60" />
       </div>
       {[1, 2, 3].map((i) => (
-        <div key={i} className="rounded-xl border bg-card p-6 shadow-sm">
+        <div key={i} className="rounded-xl border border-stone-200 bg-card p-6">
           <Skeleton className="mb-2 h-6 w-28" />
           <Skeleton className="mb-4 h-4 w-48" />
           <div className="space-y-4">

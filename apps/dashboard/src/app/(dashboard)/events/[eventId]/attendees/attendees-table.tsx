@@ -85,11 +85,11 @@ export function AttendeesTable(props: AttendeesTableProps) {
           </Button>
         </div>
         <AttendeeFilters ticketTypes={ticketTypes} filters={filters} onFilterChange={updateParams} />
-        <div className="rounded-xl border bg-card shadow-sm">
+        <div className="rounded-xl border bg-card">
           <div className="relative w-full overflow-x-auto">
             <table className="w-full caption-bottom text-sm">
               <thead>
-                <tr className="border-b bg-zinc-50">
+                <tr className="border-b bg-stone-50">
                   {["Name", "Email", "Company", "Ticket", "Payment", "Checked In", "Date"].map((h) => (
                     <th key={h} className="h-10 px-3 text-left font-medium">{h}</th>
                   ))}

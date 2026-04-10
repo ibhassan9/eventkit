@@ -1,5 +1,4 @@
 import { UserButton } from "@clerk/nextjs";
-import { CalendarDays } from "lucide-react";
 import { SidebarNav } from "./sidebar-nav";
 
 interface SidebarProps {
@@ -9,27 +8,27 @@ interface SidebarProps {
 
 export function Sidebar({ orgName, orgLogoUrl }: SidebarProps) {
   return (
-    <aside className="hidden w-64 flex-col bg-zinc-950 md:flex">
-      <div className="flex h-14 items-center gap-3 border-b border-white/10 px-6">
+    <aside className="hidden lg:flex w-[60px] xl:w-60 flex-col bg-white border-r border-stone-200 transition-[width] duration-150 ease-out overflow-hidden">
+      <div className="flex h-14 items-center gap-3 px-4 pt-5 pb-3">
         {orgLogoUrl ? (
           <img
             src={orgLogoUrl}
             alt={orgName}
-            className="h-7 w-7 rounded-md object-cover"
+            className="h-8 w-8 shrink-0 rounded-lg object-cover"
           />
         ) : (
-          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-indigo-600">
-            <CalendarDays className="h-4 w-4 text-white" />
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-stone-100 text-sm font-semibold text-stone-600">
+            {orgName.charAt(0).toUpperCase()}
           </div>
         )}
-        <span className="truncate text-sm font-semibold text-white">
+        <span className="hidden xl:block truncate text-sm font-semibold text-stone-900">
           {orgName}
         </span>
       </div>
 
       <SidebarNav />
 
-      <div className="border-t border-white/10 p-4">
+      <div className="mt-auto border-t border-stone-200 px-3 py-4 flex items-center gap-3">
         <UserButton
           afterSignOutUrl="/"
           appearance={{
@@ -38,6 +37,7 @@ export function Sidebar({ orgName, orgLogoUrl }: SidebarProps) {
             },
           }}
         />
+        <span className="hidden xl:block truncate text-[13px] text-stone-500">Account</span>
       </div>
     </aside>
   );

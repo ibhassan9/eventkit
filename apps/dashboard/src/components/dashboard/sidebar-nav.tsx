@@ -13,6 +13,7 @@ import {
   BadgeCheck,
   ClipboardCheck,
   TicketIcon,
+  ArrowLeft,
 } from "lucide-react";
 
 const mainNavItems = [
@@ -48,22 +49,30 @@ export function SidebarNav() {
             key={item.href}
             href={item.href}
             className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+              "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
               isActive
-                ? "border-l-2 border-indigo-500 bg-white/10 text-white"
-                : "text-zinc-400 hover:bg-white/5 hover:text-white"
+                ? "border-l-2 border-violet-500 bg-stone-100 text-stone-900 font-medium"
+                : "text-stone-500 hover:bg-stone-50 hover:text-stone-700"
             )}
           >
-            <item.icon className="h-4 w-4 shrink-0" />
-            {item.label}
+            <item.icon className="size-[18px] shrink-0" />
+            <span className="hidden xl:inline">{item.label}</span>
           </Link>
         );
       })}
 
       {eventId && (
         <>
-          <div className="px-3 pt-6 pb-2">
-            <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+          <div className="my-2 border-t border-stone-100" />
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-2 px-3 py-1.5 text-xs text-stone-400 hover:text-stone-600 transition-colors"
+          >
+            <ArrowLeft className="size-3.5 shrink-0" />
+            <span className="hidden xl:inline">All Events</span>
+          </Link>
+          <div className="px-3 pt-2 pb-1 hidden xl:block">
+            <p className="text-[13px] font-medium text-stone-400 truncate">
               Event
             </p>
           </div>
@@ -78,14 +87,14 @@ export function SidebarNav() {
                 key={href}
                 href={href}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors xl:pl-5",
                   isActive
-                    ? "border-l-2 border-indigo-500 bg-white/10 text-white"
-                    : "text-zinc-400 hover:bg-white/5 hover:text-white"
+                    ? "border-l-2 border-violet-500 bg-stone-100 text-stone-900 font-medium"
+                    : "text-stone-500 hover:bg-stone-50 hover:text-stone-700"
                 )}
               >
-                <item.icon className="h-4 w-4 shrink-0" />
-                {item.label}
+                <item.icon className="size-[18px] shrink-0" />
+                <span className="hidden xl:inline">{item.label}</span>
               </Link>
             );
           })}

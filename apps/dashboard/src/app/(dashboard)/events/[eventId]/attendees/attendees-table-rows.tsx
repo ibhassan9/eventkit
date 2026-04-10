@@ -22,10 +22,10 @@ interface AttendeesTableRowsProps {
 }
 
 const paymentStyles: Record<string, string> = {
-  paid: "bg-green-100 text-green-700",
-  free: "bg-blue-100 text-blue-700",
-  pending: "bg-amber-100 text-amber-700",
-  refunded: "bg-red-100 text-red-700",
+  paid: "bg-green-50 text-green-700",
+  free: "bg-stone-100 text-stone-700",
+  pending: "bg-amber-50 text-amber-700",
+  refunded: "bg-red-50 text-red-700",
 };
 
 export function AttendeesTableRows({
@@ -51,7 +51,7 @@ export function AttendeesTableRows({
       {attendees.map((a) => (
         <tr
           key={a.id}
-          className="border-b transition-colors hover:bg-muted/50 cursor-pointer"
+          className="border-b transition-colors hover:bg-stone-50 cursor-pointer"
           onClick={() => onSelectAttendee(a.id)}
         >
           <td className="p-3 font-medium whitespace-nowrap">
@@ -77,7 +77,7 @@ export function AttendeesTableRows({
           <td className="p-3 whitespace-nowrap">
             <Badge
               variant={a.checkedInAt ? "secondary" : "outline"}
-              className={a.checkedInAt ? "bg-green-100 text-green-700" : ""}
+              className={a.checkedInAt ? "bg-green-50 text-green-700" : ""}
             >
               {a.checkedInAt ? "Yes" : "No"}
             </Badge>

@@ -61,7 +61,7 @@ export function SettingsGeneral({ org }: SettingsGeneralProps) {
             Update your organization name, slug, and logo.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-5">
           <div className="space-y-2">
             <Label htmlFor="org-name">Name</Label>
             <Input id="org-name" {...register("name")} />
@@ -94,7 +94,6 @@ export function SettingsGeneral({ org }: SettingsGeneralProps) {
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="bg-indigo-600 text-white hover:bg-indigo-700"
           >
             {isSubmitting ? "Saving..." : "Save Changes"}
           </Button>

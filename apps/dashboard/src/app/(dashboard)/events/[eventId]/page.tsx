@@ -26,8 +26,8 @@ export default async function EventOverviewPage({
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{event.name}</h1>
-          <p className="text-sm text-muted-foreground">Event overview</p>
+          <h1 className="text-2xl font-semibold tracking-tight">{event.name}</h1>
+          <p className="text-sm text-stone-400">Event overview</p>
         </div>
         <EventOverviewActions eventSlug={event.slug} eventId={event.id} />
       </div>

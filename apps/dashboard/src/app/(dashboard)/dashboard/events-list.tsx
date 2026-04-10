@@ -34,10 +34,10 @@ const statusConfig: Record<
   string,
   { label: string; className: string }
 > = {
-  draft: { label: "Draft", className: "bg-zinc-100 text-zinc-700" },
-  published: { label: "Published", className: "bg-green-100 text-green-700" },
-  completed: { label: "Completed", className: "bg-blue-100 text-blue-700" },
-  cancelled: { label: "Cancelled", className: "bg-red-100 text-red-700" },
+  draft: { label: "Draft", className: "bg-stone-100 text-stone-600" },
+  published: { label: "Published", className: "bg-green-50 text-green-700" },
+  completed: { label: "Completed", className: "bg-stone-100 text-stone-600" },
+  cancelled: { label: "Cancelled", className: "bg-red-50 text-red-700" },
 };
 
 export function EventsList({ events }: EventsListProps) {
@@ -55,7 +55,7 @@ export function EventsList({ events }: EventsListProps) {
           </p>
         </div>
         <Link href="/events/new">
-          <Button className="bg-indigo-600 text-white hover:bg-indigo-700">
+          <Button>
             <Plus className="mr-1.5 h-4 w-4" />
             Create Event
           </Button>
@@ -67,7 +67,7 @@ export function EventsList({ events }: EventsListProps) {
           const status = statusConfig[event.status];
           return (
             <Link key={event.id} href={`/events/${event.id}`}>
-              <Card className="transition-shadow hover:shadow-md">
+              <Card className="border border-stone-200 rounded-xl">
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between">
                     <CardTitle className="line-clamp-1 text-base">
