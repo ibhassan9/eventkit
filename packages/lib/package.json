@@ -67,6 +67,10 @@
     "./default-website-config": {
       "types": "./src/default-website-config.ts",
       "default": "./src/default-website-config.ts"
+    },
+    "./default-website-pages": {
+      "types": "./src/default-website-pages.ts",
+      "default": "./src/default-website-pages.ts"
     }
   },
   "dependencies": {

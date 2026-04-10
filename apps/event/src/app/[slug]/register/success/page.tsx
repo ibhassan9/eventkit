@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getEventBySlug } from "@eventkit/db/queries";
+import { defaultWebsitePages } from "@eventkit/lib/default-website-pages";
 import { SuccessContent } from "./success-content";
 
 interface PageProps {
@@ -22,6 +23,9 @@ export default async function RegistrationSuccessPage({
   const secondaryColor =
     event.websiteConfig?.theme.secondaryColor ?? "#6366f1";
 
+  const websitePages = event.websitePages ?? defaultWebsitePages();
+  const scheduleVisible = websitePages.pages.schedule.visible;
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-6 py-12">
       <SuccessContent
@@ -35,6 +39,7 @@ export default async function RegistrationSuccessPage({
         sessionId={session_id ?? undefined}
         primaryColor={primaryColor}
         secondaryColor={secondaryColor}
+        scheduleVisible={scheduleVisible}
       />
     </div>
   );

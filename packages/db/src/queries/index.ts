@@ -4,3 +4,6 @@ export * from "./ticket-types";
 export * from "./attendees";
 export * from "./email-templates";
 export * from "./badge-templates";
+export * from "./sessions";
+export * from "./speakers";
+export * from "./session-speakers";

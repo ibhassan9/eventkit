@@ -14,7 +14,9 @@ import { ticketTypes } from "./ticket-types";
 import { attendees } from "./attendees";
 import { emailTemplates } from "./email-templates";
 import { badgeTemplates } from "./badge-templates";
-import type { RegistrationConfig, WebsiteConfig } from "@eventkit/types";
+import { sessions } from "./sessions";
+import { speakers } from "./speakers";
+import type { RegistrationConfig, WebsiteConfig, WebsitePages } from "@eventkit/types";
 
 export const eventStatusEnum = pgEnum("event_status", [
   "draft",
@@ -41,6 +43,7 @@ export const events = pgTable(
     currency: text().notNull().default("CAD"),
     status: eventStatusEnum().notNull().default("draft"),
     websiteConfig: jsonb().$type<WebsiteConfig>(),
+    websitePages: jsonb().$type<WebsitePages>(),
     registrationFields: jsonb().$type<RegistrationConfig>(),
     maxAttendees: integer(),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
@@ -62,4 +65,6 @@ export const eventsRelations = relations(events, ({ one, many }) => ({
   attendees: many(attendees),
   emailTemplates: many(emailTemplates),
   badgeTemplates: many(badgeTemplates),
+  sessions: many(sessions),
+  speakers: many(speakers),
 }));

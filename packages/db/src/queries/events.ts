@@ -1,7 +1,7 @@
 import { eq, desc, sql } from "drizzle-orm";
 import { db } from "../client";
 import { events, attendees } from "../schema";
-import type { RegistrationConfig, WebsiteConfig } from "@eventkit/types";
+import type { RegistrationConfig, WebsiteConfig, WebsitePages } from "@eventkit/types";
 
 export async function getEventsByOrgId(organizationId: string) {
   return db.query.events.findMany({
@@ -80,6 +80,7 @@ export async function updateEvent(
     currency: string;
     status: "draft" | "published" | "completed" | "cancelled";
     websiteConfig: WebsiteConfig | null;
+    websitePages: WebsitePages | null;
     registrationFields: RegistrationConfig | null;
     maxAttendees: number | null;
   }>

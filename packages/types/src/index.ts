@@ -114,3 +114,52 @@ export interface MergeTag {
   label: string;
   sample: string;
 }
+
+export type SpeakerRole = "speaker" | "moderator" | "panelist";
+
+export interface WebsitePages {
+  pages: {
+    home: {
+      visible: true;
+      title: string;
+      sections: {
+        hero: boolean;
+        about: boolean;
+        location: boolean;
+        faq: boolean;
+      };
+    };
+    schedule: {
+      visible: boolean;
+      title: string;
+    };
+    speakers: {
+      visible: boolean;
+      title: string;
+    };
+  };
+  settings: {
+    theme: {
+      primaryColor: string;
+      accentColor: string;
+      fontFamily: string;
+    };
+    meta: {
+      title: string;
+      description: string;
+      ogImage: string;
+    };
+    registration: {
+      ctaText: string;
+      ctaPosition: string;
+    };
+    navbar: {
+      style: string;
+      showLogo: boolean;
+    };
+    footer: {
+      showOrganizer: boolean;
+      customText: string;
+    };
+  };
+}

@@ -5,6 +5,7 @@ import { createSafeAction } from "@/lib/safe-action";
 import {
   saveWebsiteConfigSchema,
   generateWebsiteConfigSchema,
+  saveWebsitePagesSchema,
 } from "@eventkit/lib/validators";
 import { getEventById, updateEvent } from "@eventkit/db/queries";
 import { generateStructuredOutput, AI_PROMPTS } from "@eventkit/lib/ai";
@@ -97,3 +98,21 @@ const websiteConfigAISchema = {
   },
   required: ["theme", "sections"],
 };
+
+export const saveWebsitePages = createSafeAction(
+  saveWebsitePagesSchema,
+  async (input, ctx) => {
+    const event = await getEventById(input.eventId);
+    if (!event || event.organizationId !== ctx.organizationId) {
+      throw new Error("Event not found");
+    }
+
+    await updateEvent(input.eventId, {
+      websitePages: input.websitePages,
+    });
+
+    revalidatePath(`/events/${input.eventId}/website`);
+    revalidatePath(`/${event.slug}`);
+    return { saved: true };
+  }
+);

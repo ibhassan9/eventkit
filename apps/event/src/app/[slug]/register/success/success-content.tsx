@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CheckCircle, Calendar, Loader2 } from "lucide-react";
+import { CheckCircle, Calendar, CalendarDays, Loader2 } from "lucide-react";
 import { Button } from "@eventkit/ui/button";
 import { generateGoogleCalendarUrl } from "@eventkit/lib/calendar";
 import { QrCodeDisplay } from "./qr-code-display";
@@ -18,6 +18,7 @@ interface SuccessContentProps {
   sessionId?: string;
   primaryColor: string;
   secondaryColor: string;
+  scheduleVisible?: boolean;
 }
 
 export function SuccessContent({
@@ -31,6 +32,7 @@ export function SuccessContent({
   sessionId,
   primaryColor,
   secondaryColor,
+  scheduleVisible,
 }: SuccessContentProps) {
   const [confirmed, setConfirmed] = useState(!!qrCode);
   const [pollCount, setPollCount] = useState(0);
@@ -103,6 +105,16 @@ export function SuccessContent({
           <Calendar data-icon="inline-start" className="size-3.5" />
           Add to Google Calendar
         </Button>
+        {scheduleVisible && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => (window.location.href = `/${eventSlug}/schedule`)}
+          >
+            <CalendarDays data-icon="inline-start" className="size-3.5" />
+            View Schedule
+          </Button>
+        )}
         <Button
           variant="outline"
           size="sm"

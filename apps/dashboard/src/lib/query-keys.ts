@@ -48,4 +48,19 @@ export const queryKeys = {
     detail: (eventId: string) =>
       [...queryKeys.registrationConfig.all, "detail", eventId] as const,
   },
+  websitePages: {
+    all: ["websitePages"] as const,
+    detail: (eventId: string) =>
+      [...queryKeys.websitePages.all, "detail", eventId] as const,
+  },
+  sessions: {
+    all: ["sessions"] as const,
+    list: (eventId: string) =>
+      [...queryKeys.sessions.all, "list", eventId] as const,
+  },
+  speakers: {
+    all: ["speakers"] as const,
+    list: (eventId: string) =>
+      [...queryKeys.speakers.all, "list", eventId] as const,
+  },
 };

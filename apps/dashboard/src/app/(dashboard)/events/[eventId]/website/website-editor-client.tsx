@@ -1,16 +1,28 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { useState } from "react";
+import { Loader2, ArrowLeft } from "lucide-react";
+import { Button } from "@eventkit/ui/button";
 import { useWebsiteConfig } from "@/hooks/use-website-config";
+import { useWebsitePages } from "@/hooks/use-website-pages";
 import { defaultWebsiteConfig } from "@eventkit/lib/default-website-config";
+import { defaultWebsitePages } from "@eventkit/lib/default-website-pages";
+import type { WebsitePages } from "@eventkit/types";
 import { WebsiteEditor } from "./website-editor";
+import { WebsiteDashboard } from "./website-dashboard";
 
 interface WebsiteEditorClientProps {
   eventId: string;
 }
 
 export function WebsiteEditorClient({ eventId }: WebsiteEditorClientProps) {
-  const { data, isLoading, error } = useWebsiteConfig(eventId);
+  const configQuery = useWebsiteConfig(eventId);
+  const pagesQuery = useWebsitePages(eventId);
+  const [view, setView] = useState<"dashboard" | "editor">("dashboard");
+  const [localPages, setLocalPages] = useState<WebsitePages | null>(null);
+
+  const isLoading = configQuery.isLoading || pagesQuery.isLoading;
+  const error = configQuery.error || pagesQuery.error;
 
   if (isLoading) {
     return (
@@ -26,7 +38,7 @@ export function WebsiteEditorClient({ eventId }: WebsiteEditorClientProps) {
     );
   }
 
-  if (error || !data) {
+  if (error || !configQuery.data || !pagesQuery.data) {
     return (
       <div className="container mx-auto max-w-7xl px-4 py-8">
         <div className="mb-6">
@@ -39,23 +51,41 @@ export function WebsiteEditorClient({ eventId }: WebsiteEditorClientProps) {
     );
   }
 
-  const config = data.websiteConfig ?? defaultWebsiteConfig(data.eventName);
+  const config = configQuery.data.websiteConfig ?? defaultWebsiteConfig(configQuery.data.eventName);
+  const websitePages = localPages ?? pagesQuery.data.websitePages ?? defaultWebsitePages();
+  const eventSlug = configQuery.data.eventSlug;
+
+  if (view === "editor") {
+    return (
+      <div className="container mx-auto max-w-7xl px-4 py-8">
+        <div className="mb-6">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setView("dashboard")}
+            className="mb-4 -ml-2"
+          >
+            <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
+            Back to Dashboard
+          </Button>
+        </div>
+        <WebsiteEditor
+          eventId={eventId}
+          eventSlug={eventSlug}
+          initialConfig={config}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto max-w-7xl px-4 py-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">Event Website</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Design your public event page. Visitors will see this at{" "}
-          <span className="font-medium text-foreground">
-            eventkit.app/{data.eventSlug}
-          </span>
-        </p>
-      </div>
-      <WebsiteEditor
+      <WebsiteDashboard
         eventId={eventId}
-        eventSlug={data.eventSlug}
-        initialConfig={config}
+        websitePages={websitePages}
+        eventSlug={eventSlug}
+        onEditContent={() => setView("editor")}
+        onWebsitePagesChange={setLocalPages}
       />
     </div>
   );

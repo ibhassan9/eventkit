@@ -5,4 +5,7 @@ export { fetchEmailTemplates } from "./email-templates";
 export { fetchBadgeTemplates } from "./badge-templates";
 export { fetchOrganization } from "./organization";
 export { fetchWebsiteConfig } from "./website";
+export { fetchWebsitePages } from "./website-pages";
 export { fetchRegistrationConfig } from "./registration";
+export { fetchSessions } from "./sessions";
+export { fetchSpeakers } from "./speakers";

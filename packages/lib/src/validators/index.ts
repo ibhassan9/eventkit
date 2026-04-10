@@ -5,4 +5,5 @@ export * from "./attendees";
 export * from "./email-templates";
 export * from "./badge-templates";
 export * from "./website-config";
+export * from "./website-pages";
 export * from "./registration-config";

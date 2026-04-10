@@ -33,3 +33,19 @@ export {
   badgeTemplates,
   badgeTemplatesRelations,
 } from "./badge-templates";
+
+export {
+  sessions,
+  sessionsRelations,
+} from "./sessions";
+
+export {
+  speakers,
+  speakersRelations,
+} from "./speakers";
+
+export {
+  sessionSpeakers,
+  sessionSpeakersRelations,
+  speakerRoleEnum,
+} from "./session-speakers";
