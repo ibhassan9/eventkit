@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { getEventBySlug } from "@eventkit/db/queries";
 import { formatDateRange } from "@eventkit/lib/utils";
 import type { WebsiteConfig, WebsiteSection } from "@eventkit/types";
+import { defaultWebsiteConfig } from "@eventkit/lib/default-website-config";
 import { EventNav } from "./components/event-nav";
 import { HeroSection } from "./components/hero-section";
 import { AboutSection } from "./components/about-section";
@@ -40,8 +41,7 @@ export default async function PublicEventPage({ params }: PageProps) {
   const event = await getEventBySlug(slug);
   if (!event) notFound();
 
-  const config: WebsiteConfig | null = event.websiteConfig;
-  if (!config) notFound();
+  const config: WebsiteConfig = event.websiteConfig ?? defaultWebsiteConfig(event.name);
 
   const enabledSections = config.sections.filter((s) => s.enabled);
   const { theme } = config;

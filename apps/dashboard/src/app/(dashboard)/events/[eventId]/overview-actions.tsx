@@ -12,10 +12,8 @@ interface EventOverviewActionsProps {
 export function EventOverviewActions({
   eventSlug,
 }: EventOverviewActionsProps) {
-  const registrationUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/e/${eventSlug}`
-      : `/e/${eventSlug}`;
+  const eventBaseUrl = process.env.NEXT_PUBLIC_EVENT_URL ?? "http://localhost:3002";
+  const registrationUrl = `${eventBaseUrl}/${eventSlug}`;
 
   function handleCopyLink() {
     navigator.clipboard.writeText(registrationUrl);
@@ -29,7 +27,7 @@ export function EventOverviewActions({
         Copy Link
       </Button>
       <a
-        href={`/e/${eventSlug}`}
+        href={`${eventBaseUrl}/${eventSlug}`}
         target="_blank"
         rel="noopener noreferrer"
       >

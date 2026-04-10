@@ -21,7 +21,7 @@ export function defaultWebsiteConfig(eventName: string): WebsiteConfig {
       {
         type: "about",
         enabled: true,
-        data: { content: "Tell your attendees what this event is about." },
+        data: { content: "More details coming soon." },
       },
       {
         type: "schedule",

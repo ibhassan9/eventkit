@@ -2,7 +2,7 @@
 
 import { Loader2 } from "lucide-react";
 import { useWebsiteConfig } from "@/hooks/use-website-config";
-import { defaultWebsiteConfig } from "./default-config";
+import { defaultWebsiteConfig } from "@eventkit/lib/default-website-config";
 import { WebsiteEditor } from "./website-editor";
 
 interface WebsiteEditorClientProps {

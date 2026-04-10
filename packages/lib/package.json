@@ -63,6 +63,10 @@
     "./checkin": {
       "types": "./src/checkin.ts",
       "default": "./src/checkin.ts"
+    },
+    "./default-website-config": {
+      "types": "./src/default-website-config.ts",
+      "default": "./src/default-website-config.ts"
     }
   },
   "dependencies": {

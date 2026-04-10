@@ -43,7 +43,9 @@ export function EventOverviewClient({ eventId }: EventOverviewClientProps) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">{event.name}</h1>
-          <p className="text-sm text-stone-400">Event overview</p>
+          <p className="text-sm text-stone-400">
+            {process.env.NEXT_PUBLIC_EVENT_URL ?? "http://localhost:3002"}/{event.slug}
+          </p>
         </div>
         <EventOverviewActions eventSlug={event.slug} eventId={event.id} />
       </div>
