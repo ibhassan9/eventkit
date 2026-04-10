@@ -26,7 +26,7 @@ export function defaultWebsitePages(): WebsitePages {
       theme: {
         primaryColor: "#7C3AED",
         accentColor: "#F59E0B",
-        fontFamily: "inter",
+        fontFamily: "figtree",
       },
       meta: {
         title: "",

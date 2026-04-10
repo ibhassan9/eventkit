@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useAttendees } from "@/hooks/use-attendees";
 import { useTicketTypes } from "@/hooks/use-ticket-types";
+import { useRegistrationConfig } from "@/hooks/use-registration-config";
 import { AttendeesTable } from "./attendees-table";
 
 interface AttendeesClientProps {
@@ -39,7 +40,12 @@ export function AttendeesClient({ eventId }: AttendeesClientProps) {
     isLoading: ticketTypesLoading,
   } = useTicketTypes(eventId);
 
-  const isLoading = attendeesLoading || ticketTypesLoading;
+  const {
+    data: registrationConfig,
+    isLoading: registrationConfigLoading,
+  } = useRegistrationConfig(eventId);
+
+  const isLoading = attendeesLoading || ticketTypesLoading || registrationConfigLoading;
 
   if (isLoading) {
     return (
@@ -83,6 +89,7 @@ export function AttendeesClient({ eventId }: AttendeesClientProps) {
         currentPage={attendeesData?.currentPage ?? page}
         hasMore={attendeesData?.hasMore ?? false}
         filters={filters}
+        customFields={registrationConfig?.fields ?? []}
       />
     </div>
   );

@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Figtree } from "next/font/google";
 import { Toaster } from "@eventkit/ui/sonner";
 import { TooltipProvider } from "@eventkit/ui/tooltip";
 import "./globals.css";
 
-const font = Plus_Jakarta_Sans({
+const font = Figtree({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
-  variable: "--font-plus-jakarta",
+  variable: "--font-figtree",
 });
 
 export const metadata: Metadata = {

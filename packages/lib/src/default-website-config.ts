@@ -6,7 +6,7 @@ export function defaultWebsiteConfig(eventName: string): WebsiteConfig {
       primaryColor: "#1a1a2e",
       secondaryColor: "#6366f1",
       backgroundColor: "#ffffff",
-      fontFamily: "inter",
+      fontFamily: "figtree",
     },
     sections: [
       {

@@ -95,7 +95,7 @@ export function ThemeEditor({ theme, onChange }: ThemeEditorProps) {
               if (val !== null) {
                 onChange({
                   ...theme,
-                  fontFamily: val as "inter" | "system",
+                  fontFamily: val as "figtree" | "inter" | "system",
                 });
               }
             }}
@@ -104,6 +104,7 @@ export function ThemeEditor({ theme, onChange }: ThemeEditorProps) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="figtree">Figtree</SelectItem>
               <SelectItem value="inter">Inter</SelectItem>
               <SelectItem value="system">System</SelectItem>
             </SelectContent>

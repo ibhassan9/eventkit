@@ -8,12 +8,18 @@ import {
   getAttendeeByEmail,
   getOrganizationById,
   createAttendee,
+  findUserByEmail,
+  createUser,
+  updateAttendee,
 } from "@eventkit/db/queries";
 import { generateQRCode } from "@eventkit/lib/qr";
 import { sendEmail } from "@eventkit/lib/resend";
 import { createCheckoutSession } from "@eventkit/lib/stripe";
 import { checkRateLimit } from "@eventkit/lib/rate-limit";
+import { generateTemporaryPassword, hashPassword } from "@eventkit/lib/passwords";
 import { ConfirmationEmail } from "@eventkit/emails/confirmation";
+import { WelcomeAttendeeEmail } from "@eventkit/emails/welcome-attendee";
+import { createAttendeeSession } from "@/lib/attendee-auth";
 import { checkCapacity } from "./check-capacity";
 
 export const registerFree = createPublicAction(
@@ -48,6 +54,44 @@ export const registerFree = createPublicAction(
       amountPaid: 0,
       qrCode,
     });
+
+    // Create or find user account and link to attendee
+    let existingUser = await findUserByEmail(input.email);
+    if (!existingUser) {
+      const tempPassword = generateTemporaryPassword();
+      const passwordHash = await hashPassword(tempPassword);
+      existingUser = await createUser({
+        email: input.email,
+        passwordHash,
+        firstName: input.firstName,
+        lastName: input.lastName,
+        temporaryPassword: tempPassword,
+        mustChangePassword: true,
+      });
+      // Send welcome email with credentials (only for new users)
+      try {
+        await sendEmail({
+          to: input.email,
+          subject: `Your login credentials for ${event.name}`,
+          react: WelcomeAttendeeEmail({
+            attendeeName: `${input.firstName} ${input.lastName}`,
+            eventName: event.name,
+            eventDate: event.startDate.toISOString(),
+            venue: event.venue ?? undefined,
+            ticketType: ticket.name,
+            email: input.email,
+            tempPassword,
+            eventSlug: event.slug,
+          }),
+        });
+      } catch {
+        // Email failure should not block registration
+      }
+    }
+    // Link attendee to user
+    await updateAttendee(attendee.id, { userId: existingUser.id });
+    // Auto-login the user
+    await createAttendeeSession(existingUser.id);
 
     try {
       const qrDataUrl = await generateQRCode(qrCode);
@@ -109,6 +153,44 @@ export const createCheckout = createPublicAction(
       amountPaid: ticket.price,
       qrCode,
     });
+
+    // Create or find user account and link to attendee
+    let existingUser = await findUserByEmail(input.email);
+    if (!existingUser) {
+      const tempPassword = generateTemporaryPassword();
+      const passwordHash = await hashPassword(tempPassword);
+      existingUser = await createUser({
+        email: input.email,
+        passwordHash,
+        firstName: input.firstName,
+        lastName: input.lastName,
+        temporaryPassword: tempPassword,
+        mustChangePassword: true,
+      });
+      // Send welcome email with credentials (only for new users)
+      try {
+        await sendEmail({
+          to: input.email,
+          subject: `Your login credentials for ${event.name}`,
+          react: WelcomeAttendeeEmail({
+            attendeeName: `${input.firstName} ${input.lastName}`,
+            eventName: event.name,
+            eventDate: event.startDate.toISOString(),
+            venue: event.venue ?? undefined,
+            ticketType: ticket.name,
+            email: input.email,
+            tempPassword,
+            eventSlug: event.slug,
+          }),
+        });
+      } catch {
+        // Email failure should not block registration
+      }
+    }
+    // Link attendee to user
+    await updateAttendee(attendee.id, { userId: existingUser.id });
+    // Auto-login the user
+    await createAttendeeSession(existingUser.id);
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     const session = await createCheckoutSession({

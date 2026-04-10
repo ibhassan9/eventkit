@@ -12,6 +12,7 @@ import {
 import { relations } from "drizzle-orm";
 import { events } from "./events";
 import { ticketTypes } from "./ticket-types";
+import { users } from "./users";
 
 export const paymentStatusEnum = pgEnum("payment_status", [
   "pending",
@@ -30,6 +31,7 @@ export const attendees = pgTable(
     ticketTypeId: uuid()
       .notNull()
       .references(() => ticketTypes.id),
+    userId: uuid().references(() => users.id, { onDelete: "set null" }),
     firstName: text().notNull(),
     lastName: text().notNull(),
     email: text().notNull(),
@@ -52,6 +54,7 @@ export const attendees = pgTable(
     index("attendees_event_id_idx").on(table.eventId),
     uniqueIndex("attendees_email_event_idx").on(table.email, table.eventId),
     index("attendees_qr_code_idx").on(table.qrCode),
+    index("attendees_user_id_idx").on(table.userId),
   ]
 );
 
@@ -63,5 +66,9 @@ export const attendeesRelations = relations(attendees, ({ one }) => ({
   ticketType: one(ticketTypes, {
     fields: [attendees.ticketTypeId],
     references: [ticketTypes.id],
+  }),
+  user: one(users, {
+    fields: [attendees.userId],
+    references: [users.id],
   }),
 }));

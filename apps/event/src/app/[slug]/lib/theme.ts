@@ -9,7 +9,7 @@ export function resolveTheme(event: {
     return {
       primaryColor: t.primaryColor ?? "#7C3AED",
       accentColor: t.accentColor ?? "#F59E0B",
-      fontFamily: t.fontFamily ?? "inter",
+      fontFamily: t.fontFamily ?? "figtree",
     };
   }
 
@@ -18,13 +18,13 @@ export function resolveTheme(event: {
     return {
       primaryColor: t.primaryColor ?? "#7C3AED",
       accentColor: t.secondaryColor ?? "#F59E0B",
-      fontFamily: t.fontFamily ?? "inter",
+      fontFamily: t.fontFamily ?? "figtree",
     };
   }
 
   return {
     primaryColor: "#7C3AED",
     accentColor: "#F59E0B",
-    fontFamily: "inter",
+    fontFamily: "figtree",
   };
 }

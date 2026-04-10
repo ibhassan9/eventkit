@@ -1,6 +1,7 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getEventBySlug, getTicketTypesByEventId } from "@eventkit/db/queries";
+import { getAttendeeUser, getAttendeeForEvent } from "@/lib/attendee-auth";
 import { RegistrationForm } from "./registration-form";
 
 interface PageProps {
@@ -22,6 +23,14 @@ export default async function RegisterPage({ params }: PageProps) {
   const { slug } = await params;
   const event = await getEventBySlug(slug);
   if (!event) notFound();
+
+  const attendeeUser = await getAttendeeUser();
+  if (attendeeUser) {
+    const existingAttendee = await getAttendeeForEvent(attendeeUser.id, event.id);
+    if (existingAttendee) {
+      redirect(`/${slug}/my-registration`);
+    }
+  }
 
   const ticketTypes = await getTicketTypesByEventId(event.id);
   const visibleTickets = ticketTypes.filter((t) => t.isVisible);

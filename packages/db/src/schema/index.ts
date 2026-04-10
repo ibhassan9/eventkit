@@ -1,6 +1,16 @@
 export { organizations } from "./organizations";
 
 export {
+  users,
+  usersRelations,
+} from "./users";
+
+export {
+  attendeeSessions,
+  attendeeSessionsRelations,
+} from "./attendee-sessions";
+
+export {
   events,
   eventsRelations,
   eventStatusEnum,

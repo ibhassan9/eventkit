@@ -4,11 +4,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useCallback } from "react";
 import { Button } from "@eventkit/ui/button";
 import { Input } from "@eventkit/ui/input";
-import { Search, Download, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Download, ChevronLeft, ChevronRight, UserPlus } from "lucide-react";
 import { AttendeeSheet } from "./attendee-sheet";
+import { AddAttendeeSheet } from "./add-attendee-sheet";
 import { AttendeeFilters } from "./attendee-filters";
 import { AttendeesTableRows } from "./attendees-table-rows";
 import { exportAttendeesToCsv } from "./export-csv";
+import type { CustomField } from "@eventkit/types";
 
 interface Attendee {
   id: string;
@@ -21,11 +23,13 @@ interface Attendee {
   createdAt: Date;
   ticketTypeId: string;
   jobTitle: string | null;
+  userId?: string | null;
 }
 
 interface TicketType {
   id: string;
   name: string;
+  price: number;
 }
 
 interface AttendeesTableProps {
@@ -35,13 +39,15 @@ interface AttendeesTableProps {
   currentPage: number;
   hasMore: boolean;
   filters: { search: string; status: string; ticketType: string; checkedIn: string };
+  customFields: CustomField[];
 }
 
 export function AttendeesTable(props: AttendeesTableProps) {
-  const { attendees, ticketTypes, eventId, currentPage, hasMore, filters } = props;
+  const { attendees, ticketTypes, eventId, currentPage, hasMore, filters, customFields } = props;
   const router = useRouter();
   const searchParams = useSearchParams();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [addSheetOpen, setAddSheetOpen] = useState(false);
   const [searchValue, setSearchValue] = useState(filters.search);
 
   const ticketTypeMap = Object.fromEntries(ticketTypes.map((tt) => [tt.id, tt.name]));
@@ -80,9 +86,14 @@ export function AttendeesTable(props: AttendeesTableProps) {
             </div>
             <Button type="submit" variant="outline" size="sm">Search</Button>
           </form>
-          <Button variant="outline" size="sm" onClick={() => exportAttendeesToCsv(attendees, ticketTypeMap, eventId)}>
-            <Download className="mr-1.5 h-3.5 w-3.5" />Export CSV
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => setAddSheetOpen(true)}>
+              <UserPlus className="mr-1.5 h-3.5 w-3.5" />Add Attendee
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => exportAttendeesToCsv(attendees, ticketTypeMap, eventId)}>
+              <Download className="mr-1.5 h-3.5 w-3.5" />Export CSV
+            </Button>
+          </div>
         </div>
         <AttendeeFilters ticketTypes={ticketTypes} filters={filters} onFilterChange={updateParams} />
         <div className="rounded-xl border bg-card">
@@ -117,8 +128,16 @@ export function AttendeesTable(props: AttendeesTableProps) {
           ticketTypeName={ticketTypeMap[selected.ticketTypeId] ?? "-"}
           open={!!selectedId}
           onOpenChange={(open) => { if (!open) setSelectedId(null); }}
+          eventId={eventId}
         />
       )}
+      <AddAttendeeSheet
+        open={addSheetOpen}
+        onOpenChange={setAddSheetOpen}
+        eventId={eventId}
+        ticketTypes={ticketTypes}
+        customFields={customFields}
+      />
     </>
   );
 }

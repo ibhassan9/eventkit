@@ -144,6 +144,9 @@ importers:
       next:
         specifier: 15.5.15
         version: 15.5.15(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      prettier:
+        specifier: ^3.8.2
+        version: 3.8.2
       react:
         specifier: 19.1.0
         version: 19.1.0
@@ -223,6 +226,9 @@ importers:
       next:
         specifier: 15.5.15
         version: 15.5.15(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      prettier:
+        specifier: ^3.8.2
+        version: 3.8.2
       qrcode:
         specifier: ^1.5.4
         version: 1.5.4

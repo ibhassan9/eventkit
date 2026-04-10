@@ -1,6 +1,10 @@
 @import "@eventkit/ui/globals.css";
 @source "../../../../packages/ui/src";
 
+@theme inline {
+  --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

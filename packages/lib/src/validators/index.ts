@@ -7,3 +7,4 @@ export * from "./badge-templates";
 export * from "./website-config";
 export * from "./website-pages";
 export * from "./registration-config";
+export * from "./users";

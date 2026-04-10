@@ -23,6 +23,10 @@
     "./styles": {
       "types": "./src/styles.ts",
       "default": "./src/styles.ts"
+    },
+    "./welcome-attendee": {
+      "types": "./src/welcome-attendee.tsx",
+      "default": "./src/welcome-attendee.tsx"
     }
   },
   "dependencies": {

@@ -8,6 +8,13 @@
       "when": 1775835645742,
       "tag": "0000_silly_swarm",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1775838311290,
+      "tag": "0001_dark_frog_thor",
+      "breakpoints": true
     }
   ]
 }

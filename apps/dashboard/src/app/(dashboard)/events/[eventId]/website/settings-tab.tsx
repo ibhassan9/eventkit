@@ -189,6 +189,7 @@ export function SettingsTab({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="figtree">Figtree</SelectItem>
               <SelectItem value="inter">Inter</SelectItem>
               <SelectItem value="plus-jakarta-sans">
                 Plus Jakarta Sans

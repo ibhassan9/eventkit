@@ -1,6 +1,13 @@
 import type { Metadata } from "next";
+import { Figtree } from "next/font/google";
 import { Toaster } from "@eventkit/ui/sonner";
 import "./globals.css";
+
+const font = Figtree({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-figtree",
+});
 
 export const metadata: Metadata = {
   title: "EventKit Check-in",
@@ -13,7 +20,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={font.variable}>
       <body className="antialiased">
         <div className="min-h-screen bg-zinc-50">
           {children}

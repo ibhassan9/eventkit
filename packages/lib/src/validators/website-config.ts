@@ -62,7 +62,7 @@ const themeSchema = z.object({
   primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Must be a hex color"),
   secondaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Must be a hex color"),
   backgroundColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Must be a hex color"),
-  fontFamily: z.enum(["inter", "system"]),
+  fontFamily: z.enum(["figtree", "inter", "system"]),
 });
 
 export const websiteConfigSchema = z.object({

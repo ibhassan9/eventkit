@@ -7,7 +7,7 @@ export interface WebsiteConfig {
     primaryColor: string;
     secondaryColor: string;
     backgroundColor: string;
-    fontFamily: "inter" | "system";
+    fontFamily: "figtree" | "inter" | "system";
   };
   sections: WebsiteSection[];
 }

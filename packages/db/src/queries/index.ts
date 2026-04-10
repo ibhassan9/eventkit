@@ -7,3 +7,5 @@ export * from "./badge-templates";
 export * from "./sessions";
 export * from "./speakers";
 export * from "./session-speakers";
+export * from "./users";
+export * from "./attendee-sessions";

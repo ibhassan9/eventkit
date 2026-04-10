@@ -71,6 +71,10 @@
     "./default-website-pages": {
       "types": "./src/default-website-pages.ts",
       "default": "./src/default-website-pages.ts"
+    },
+    "./passwords": {
+      "types": "./src/passwords.ts",
+      "default": "./src/passwords.ts"
     }
   },
   "dependencies": {
