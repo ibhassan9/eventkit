@@ -1,14 +1,20 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import { Toaster } from "@eventkit/ui/sonner";
 import { TooltipProvider } from "@eventkit/ui/tooltip";
-import { MarketingHeader } from "@/components/marketing-header";
+import { ScrollNav } from "@/components/scroll-nav";
 import { Footer } from "@/components/footer";
 import "./globals.css";
 
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+});
+
 export const metadata: Metadata = {
-  title: "EventKit - AI-Native Event Management",
+  title: "EventKit — AI-Native Event Management",
   description:
-    "Set up your event in 10 minutes. AI-powered event websites, registration, badges, and check-in.",
+    "The modern event platform for Canadian organizations. Registration, payments, beautiful event websites, and on-site check-in — set up in minutes, not days.",
 };
 
 export default function RootLayout({
@@ -17,14 +23,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={inter.variable}>
       <body className="antialiased">
         <TooltipProvider>
-          <div className="flex min-h-screen flex-col">
-            <MarketingHeader />
-            <main className="flex-1">{children}</main>
-            <Footer />
-          </div>
+          <ScrollNav />
+          <main>{children}</main>
+          <Footer />
           <Toaster richColors position="bottom-right" />
         </TooltipProvider>
       </body>

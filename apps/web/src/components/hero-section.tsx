@@ -1,92 +1,74 @@
 import Link from "next/link";
-import { Button } from "@eventkit/ui/button";
+import { DashboardMockup } from "./dashboard-mockup";
 
 export function HeroSection() {
   return (
-    <section className="relative flex min-h-screen items-center justify-center overflow-hidden">
-      <HeroBackground />
-      <div className="relative z-10 mx-auto max-w-4xl px-6 py-32 text-center">
-        <div className="animate-fade-in-up">
-          <span className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-4 py-1.5 text-sm font-medium text-indigo-700">
-            <span className="h-2 w-2 rounded-full bg-indigo-500" />
-            Now in public beta
-          </span>
+    <section className="relative overflow-hidden bg-brand-bg">
+      <div className="mx-auto max-w-7xl px-6 pb-24 pt-40 lg:pb-32 lg:pt-48">
+        <div className="mx-auto max-w-3xl text-center">
+          {/* Pill badge */}
+          <div
+            className="animate-fade-in-up inline-flex items-center gap-2 rounded-full bg-violet-500/10 px-4 py-1.5 text-[13px] font-medium uppercase tracking-wide text-violet-600"
+          >
+            ✨ AI-powered event management
+          </div>
+
+          {/* Headline */}
+          <h1
+            className="mt-6 animate-fade-in-up text-[40px] font-bold leading-[1.1] tracking-[-0.02em] text-stone-900 text-balance opacity-0 sm:text-5xl lg:text-[64px]"
+            style={{ animationDelay: "100ms" }}
+          >
+            Your event deserves better than a spreadsheet
+          </h1>
+
+          {/* Subheadline */}
+          <p
+            className="mx-auto mt-6 max-w-2xl animate-fade-in-up text-lg leading-[1.7] text-stone-500 text-balance opacity-0"
+            style={{ animationDelay: "200ms" }}
+          >
+            EventKit is the modern event platform for Canadian organizations.
+            Registration, payments, beautiful event websites, and on-site
+            check-in — set up in minutes, not days.
+          </p>
+
+          {/* Buttons */}
+          <div
+            className="mt-10 flex animate-fade-in-up flex-col items-center justify-center gap-4 opacity-0 sm:flex-row"
+            style={{ animationDelay: "300ms" }}
+          >
+            <Link
+              href="/sign-up"
+              className="inline-flex items-center rounded-full bg-gradient-to-r from-violet-600 via-violet-700 to-indigo-600 px-8 py-3 text-base font-semibold text-white shadow-lg shadow-violet-500/25 transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-violet-500/30"
+            >
+              Start Free
+            </Link>
+            <Link
+              href="#features"
+              className="inline-flex items-center rounded-full border border-stone-300 px-8 py-3 text-base font-semibold text-stone-900 transition-all hover:bg-stone-100"
+            >
+              See it in action
+            </Link>
+          </div>
+
+          {/* Trust text */}
+          <p
+            className="mt-6 animate-fade-in-up text-sm text-stone-400 opacity-0"
+            style={{ animationDelay: "400ms" }}
+          >
+            No credit card required · Free for up to 50 attendees
+          </p>
         </div>
-        <h1
-          className="mt-8 text-5xl font-bold leading-tight tracking-tight text-zinc-900 opacity-0 sm:text-6xl lg:text-7xl animate-fade-in-up"
-          style={{ animationDelay: "100ms" }}
-        >
-          Event management,{" "}
-          <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-            powered by AI.
-          </span>
-        </h1>
-        <p
-          className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-zinc-500 opacity-0 sm:text-xl animate-fade-in-up"
-          style={{ animationDelay: "200ms" }}
-        >
-          Describe your event and get a stunning website, registration forms,
-          and printable badges in minutes. Built for Canadian organizers who
-          want to move fast.
-        </p>
+
+        {/* Dashboard mockup */}
         <div
-          className="mt-10 flex flex-col items-center justify-center gap-4 opacity-0 sm:flex-row animate-fade-in-up"
-          style={{ animationDelay: "300ms" }}
+          className="relative mx-auto mt-20 max-w-5xl animate-fade-in-up opacity-0"
+          style={{ animationDelay: "500ms" }}
         >
-          <Button
-            className="h-12 rounded-xl bg-indigo-600 px-8 text-base font-semibold text-white hover:bg-indigo-700"
-            render={<Link href="/sign-up" />}
-          >
-            Get Started Free
-          </Button>
-          <Button
-            variant="outline"
-            className="h-12 rounded-xl px-8 text-base font-semibold"
-            render={<Link href="#demo" />}
-          >
-            See Demo
-          </Button>
+          {/* Violet glow behind mockup */}
+          <div className="absolute -inset-4 -z-10 rounded-3xl bg-violet-500/10 blur-3xl" />
+          <DashboardMockup />
         </div>
-        <p
-          className="mt-6 text-sm text-zinc-400 opacity-0 animate-fade-in-up"
-          style={{ animationDelay: "400ms" }}
-        >
-          Free forever for 1 event. No credit card required.
-        </p>
       </div>
     </section>
-  );
-}
-
-function HeroBackground() {
-  return (
-    <div className="absolute inset-0">
-      <div className="absolute inset-0 bg-gradient-to-b from-indigo-50/80 via-white to-white" />
-      <div className="absolute inset-0 overflow-hidden opacity-30">
-        <svg
-          className="absolute inset-0 h-full w-full animate-grid-move"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <defs>
-            <pattern
-              id="hero-grid"
-              width="40"
-              height="40"
-              patternUnits="userSpaceOnUse"
-            >
-              <path
-                d="M 40 0 L 0 0 0 40"
-                fill="none"
-                stroke="rgb(99 102 241 / 0.3)"
-                strokeWidth="1"
-              />
-            </pattern>
-          </defs>
-          <rect width="100%" height="200%" fill="url(#hero-grid)" />
-        </svg>
-      </div>
-      <div className="absolute left-1/2 top-0 -translate-x-1/2 h-[600px] w-[600px] rounded-full bg-indigo-400/10 blur-3xl" />
-      <div className="absolute right-0 top-1/4 h-[400px] w-[400px] rounded-full bg-purple-400/10 blur-3xl" />
-    </div>
   );
 }
