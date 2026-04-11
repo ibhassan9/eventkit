@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { CheckCircle, Copy, Eye, EyeOff, Loader2 } from "lucide-react";
+import { CheckCircle, Copy, Eye, EyeOff, Loader2, Minus, Plus } from "lucide-react";
 import { Button } from "@eventkit/ui/button";
 import { Input } from "@eventkit/ui/input";
 import { Label } from "@eventkit/ui/label";
@@ -21,18 +21,34 @@ import {
 } from "@eventkit/ui/select";
 import { RadioGroup, RadioGroupItem } from "@eventkit/ui/radio-group";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@eventkit/ui/sheet";
-import { adminAddAttendeeSchema } from "@eventkit/lib/validators";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogBody,
+  DialogFooter,
+} from "@eventkit/ui/dialog";
+import { formatCurrency } from "@eventkit/lib/utils";
+import { useConfirmClose } from "@/hooks/use-confirm-close";
 import { queryKeys } from "@/lib/query-keys";
 import { addAttendee } from "./actions";
 import type { CustomField } from "@eventkit/types";
 
-type FormValues = z.infer<typeof adminAddAttendeeSchema>;
+const formSchema = z.object({
+  eventId: z.string().uuid(),
+  firstName: z.string().min(1, "First name is required").max(100),
+  lastName: z.string().min(1, "Last name is required").max(100),
+  email: z.string().email("Invalid email address"),
+  company: z.string().max(200).optional(),
+  jobTitle: z.string().max(200).optional(),
+  ticketTypeId: z.string().uuid().optional(),
+  paymentStatus: z.enum(["free", "paid"]).optional(),
+  customFieldValues: z.record(z.string(), z.string()).optional(),
+  sendWelcomeEmail: z.boolean().optional(),
+});
+
+type FormValues = z.infer<typeof formSchema>;
 
 interface TicketTypeOption {
   id: string;
@@ -40,7 +56,7 @@ interface TicketTypeOption {
   price: number;
 }
 
-interface AddAttendeeSheetProps {
+interface AddAttendeeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   eventId: string;
@@ -56,17 +72,52 @@ interface SuccessData {
   temporaryPassword?: string;
 }
 
-export function AddAttendeeSheet({
+function TicketStepper({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <button
+        type="button"
+        onClick={() => onChange(Math.max(0, value - 1))}
+        disabled={disabled || value === 0}
+        className="flex h-7 w-7 items-center justify-center rounded border border-stone-200 text-stone-600 hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        <Minus className="h-3 w-3" />
+      </button>
+      <span className="w-5 text-center text-sm font-medium tabular-nums">
+        {value}
+      </span>
+      <button
+        type="button"
+        onClick={() => onChange(value + 1)}
+        disabled={disabled}
+        className="flex h-7 w-7 items-center justify-center rounded border border-stone-200 text-stone-600 hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        <Plus className="h-3 w-3" />
+      </button>
+    </div>
+  );
+}
+
+export function AddAttendeeDialog({
   open,
   onOpenChange,
   eventId,
   ticketTypes,
   customFields,
-}: AddAttendeeSheetProps) {
+}: AddAttendeeDialogProps) {
   const [view, setView] = useState<"form" | "success">("form");
   const [successData, setSuccessData] = useState<SuccessData | null>(null);
   const [copied, setCopied] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [ticketCart, setTicketCart] = useState<Record<string, number>>({});
   const queryClient = useQueryClient();
 
   const {
@@ -74,9 +125,9 @@ export function AddAttendeeSheet({
     handleSubmit,
     control,
     reset,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isDirty },
   } = useForm<FormValues>({
-    resolver: zodResolver(adminAddAttendeeSchema) as Resolver<FormValues>,
+    resolver: zodResolver(formSchema) as Resolver<FormValues>,
     defaultValues: {
       eventId,
       firstName: "",
@@ -91,12 +142,30 @@ export function AddAttendeeSheet({
     },
   });
 
+  const { handleOpenChange: confirmClose } = useConfirmClose({
+    isDirty: view === "form" && isDirty,
+    onOpenChange: handleOpenChange,
+  });
+
+  const cartTotal = Object.entries(ticketCart).reduce((sum, [id, qty]) => {
+    const tt = ticketTypes.find((t) => t.id === id);
+    return sum + (tt ? tt.price * qty : 0);
+  }, 0);
+
+  const cartItems = Object.entries(ticketCart)
+    .filter(([, qty]) => qty > 0)
+    .map(([id, qty]) => {
+      const tt = ticketTypes.find((t) => t.id === id)!;
+      return { id, name: tt.name, price: tt.price, quantity: qty };
+    });
+
   function handleOpenChange(isOpen: boolean) {
     if (!isOpen) {
       setView("form");
       setSuccessData(null);
       setCopied(false);
       setShowPassword(false);
+      setTicketCart({});
       reset({
         eventId,
         firstName: "",
@@ -114,27 +183,34 @@ export function AddAttendeeSheet({
   }
 
   async function onSubmit(data: FormValues) {
-    const result = await addAttendee(data);
+    const firstTicketId = cartItems.length > 0 ? cartItems[0].id : undefined;
+
+    const result = await addAttendee({
+      ...data,
+      ticketTypeId: firstTicketId,
+      paymentStatus: cartTotal > 0 ? "paid" : "free",
+    });
 
     if (!result.success) {
       toast.error(result.error);
       return;
     }
 
-    const ticketType = data.ticketTypeId
-      ? ticketTypes.find((tt) => tt.id === data.ticketTypeId)
-      : undefined;
+    const ticketNames = cartItems.map((i) =>
+      i.quantity > 1 ? `${i.quantity}× ${i.name}` : i.name
+    ).join(", ");
 
     setSuccessData({
       attendeeName: `${data.firstName} ${data.lastName}`,
       email: data.email,
-      ticketTypeName: ticketType?.name,
+      ticketTypeName: ticketNames || undefined,
       isNewUser: result.data.isNewUser,
       temporaryPassword: result.data.temporaryPassword,
     });
     setView("success");
 
     queryClient.invalidateQueries({ queryKey: queryKeys.attendees.all });
+    queryClient.invalidateQueries({ queryKey: queryKeys.ticketTypes.all });
     toast.success("Attendee added successfully");
   }
 
@@ -143,6 +219,7 @@ export function AddAttendeeSheet({
     setSuccessData(null);
     setCopied(false);
     setShowPassword(false);
+    setTicketCart({});
     reset({
       eventId,
       firstName: "",
@@ -167,20 +244,17 @@ export function AddAttendeeSheet({
   }
 
   return (
-    <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent className="sm:max-w-[480px] overflow-y-auto">
+    <Dialog open={open} onOpenChange={confirmClose}>
+      <DialogContent size="lg">
         {view === "form" ? (
-          <>
-            <SheetHeader>
-              <SheetTitle>Add Attendee</SheetTitle>
-              <SheetDescription>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <DialogHeader>
+              <DialogTitle>Add Attendee</DialogTitle>
+              <DialogDescription>
                 Manually add an attendee to this event
-              </SheetDescription>
-            </SheetHeader>
-            <form
-              onSubmit={handleSubmit(onSubmit)}
-              className="space-y-4 p-4"
-            >
+              </DialogDescription>
+            </DialogHeader>
+            <DialogBody className="space-y-5">
               <input type="hidden" {...register("eventId")} />
 
               <div className="grid grid-cols-2 gap-3">
@@ -246,54 +320,50 @@ export function AddAttendeeSheet({
               </div>
 
               {ticketTypes.length > 0 && (
-                <div className="space-y-1.5">
-                  <Label>Ticket Type</Label>
-                  <Controller
-                    name="ticketTypeId"
-                    control={control}
-                    render={({ field }) => (
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select ticket type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {ticketTypes.map((tt) => (
-                            <SelectItem key={tt.id} value={tt.id}>
-                              {tt.name}
-                              {tt.price > 0 ? ` ($${(tt.price / 100).toFixed(2)})` : " (Free)"}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
+                <div className="space-y-3">
+                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Assign Tickets
+                  </p>
+                  {ticketTypes.map((tt) => (
+                    <div
+                      key={tt.id}
+                      className="flex items-center justify-between rounded-lg border border-stone-200 px-3 py-2"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-stone-900">
+                          {tt.name}
+                        </p>
+                        <p className="text-xs text-stone-500">
+                          {tt.price === 0
+                            ? "Free"
+                            : formatCurrency(tt.price, "CAD")}
+                        </p>
+                      </div>
+                      <TicketStepper
+                        value={ticketCart[tt.id] ?? 0}
+                        onChange={(v) =>
+                          setTicketCart((prev) => ({
+                            ...prev,
+                            [tt.id]: v,
+                          }))
+                        }
+                      />
+                    </div>
+                  ))}
+                  {cartItems.length > 0 && (
+                    <div className="rounded-lg bg-stone-50 p-3">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-stone-600">Total</span>
+                        <span className="font-semibold text-stone-900">
+                          {cartTotal === 0
+                            ? "Free"
+                            : formatCurrency(cartTotal, "CAD")}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
-
-              <div className="space-y-1.5">
-                <Label>Payment Status</Label>
-                <Controller
-                  name="paymentStatus"
-                  control={control}
-                  render={({ field }) => (
-                    <Select
-                      value={field.value ?? "free"}
-                      onValueChange={field.onChange}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="free">Free</SelectItem>
-                        <SelectItem value="paid">Paid</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </div>
 
               {customFields.length > 0 && (
                 <div className="space-y-3">
@@ -311,7 +381,7 @@ export function AddAttendeeSheet({
                 </div>
               )}
 
-              <div className="flex items-center gap-2 pt-2">
+              <div className="flex items-center gap-2">
                 <Controller
                   name="sendWelcomeEmail"
                   control={control}
@@ -327,31 +397,38 @@ export function AddAttendeeSheet({
                   Send welcome email with login credentials
                 </Label>
               </div>
-
-              <div className="pt-2">
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Adding...
-                    </>
-                  ) : (
-                    "Add Attendee"
-                  )}
-                </Button>
-              </div>
-            </form>
-          </>
+            </DialogBody>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="ghost"
+                className="text-stone-600 hover:bg-stone-50"
+                onClick={() => handleOpenChange(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="bg-violet-600 hover:bg-violet-700 text-white"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Adding...
+                  </>
+                ) : (
+                  "Add Attendee"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
         ) : (
           <>
-            <SheetHeader>
-              <SheetTitle>Attendee Added</SheetTitle>
-            </SheetHeader>
-            <div className="space-y-6 p-4">
+            <DialogHeader>
+              <DialogTitle>Attendee Added</DialogTitle>
+            </DialogHeader>
+            <DialogBody className="space-y-6">
               <div className="flex flex-col items-center gap-3 py-4">
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
                   <CheckCircle className="h-6 w-6 text-green-600" />
@@ -377,7 +454,7 @@ export function AddAttendeeSheet({
                 {successData?.ticketTypeName && (
                   <div>
                     <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                      Ticket Type
+                      Tickets
                     </p>
                     <p className="mt-1 text-sm">
                       {successData.ticketTypeName}
@@ -457,27 +534,26 @@ export function AddAttendeeSheet({
                   </p>
                 </div>
               )}
-
-              <div className="flex gap-3 pt-2">
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  onClick={handleAddAnother}
-                >
-                  Add Another
-                </Button>
-                <Button
-                  className="flex-1"
-                  onClick={() => handleOpenChange(false)}
-                >
-                  Done
-                </Button>
-              </div>
-            </div>
+            </DialogBody>
+            <DialogFooter>
+              <Button
+                variant="ghost"
+                className="text-stone-600 hover:bg-stone-50"
+                onClick={handleAddAnother}
+              >
+                Add Another
+              </Button>
+              <Button
+                className="bg-violet-600 hover:bg-violet-700 text-white"
+                onClick={() => handleOpenChange(false)}
+              >
+                Done
+              </Button>
+            </DialogFooter>
           </>
         )}
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }
 

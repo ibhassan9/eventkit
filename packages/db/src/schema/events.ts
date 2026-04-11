@@ -16,6 +16,7 @@ import { emailTemplates } from "./email-templates";
 import { badgeTemplates } from "./badge-templates";
 import { sessions } from "./sessions";
 import { speakers } from "./speakers";
+import { orders } from "./orders";
 import type { RegistrationConfig, WebsiteConfig, WebsitePages } from "@eventkit/types";
 
 export const eventStatusEnum = pgEnum("event_status", [
@@ -67,4 +68,5 @@ export const eventsRelations = relations(events, ({ one, many }) => ({
   badgeTemplates: many(badgeTemplates),
   sessions: many(sessions),
   speakers: many(speakers),
+  orders: many(orders),
 }));

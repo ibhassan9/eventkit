@@ -3,16 +3,16 @@ import { formatCurrency } from "@eventkit/lib/utils";
 interface EventOverviewStatsProps {
   totalAttendees: number;
   totalRevenue: number;
+  ticketsSold: number;
   checkInRate: number;
-  ticketsRemaining: number | null;
   currency: string;
 }
 
 export function EventOverviewStats({
   totalAttendees,
   totalRevenue,
+  ticketsSold,
   checkInRate,
-  ticketsRemaining,
   currency,
 }: EventOverviewStatsProps) {
   const stats = [
@@ -27,14 +27,14 @@ export function EventOverviewStats({
       context: null,
     },
     {
+      label: "Tickets Sold",
+      value: ticketsSold.toLocaleString(),
+      context: `across all ticket types`,
+    },
+    {
       label: "Check-in Rate",
       value: `${checkInRate}%`,
       context: `of ${totalAttendees} attendees`,
-    },
-    {
-      label: "Tickets Remaining",
-      value: ticketsRemaining !== null ? ticketsRemaining.toLocaleString() : "Unlimited",
-      context: ticketsRemaining !== null ? "of total capacity" : null,
     },
   ];
 

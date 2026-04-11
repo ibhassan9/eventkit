@@ -15,6 +15,7 @@ import {
   BadgeCheck,
   ClipboardCheck,
   TicketIcon,
+  Tag,
   ArrowLeft,
 } from "lucide-react";
 
@@ -26,6 +27,7 @@ const mainNavItems = [
 const eventNavItems = [
   { href: "", label: "Overview", icon: CalendarDays },
   { href: "/registration", label: "Registration", icon: TicketIcon },
+  { href: "/tickets", label: "Tickets", icon: Tag },
   { href: "/website", label: "Website", icon: Globe },
   { href: "/schedule", label: "Schedule", icon: Calendar },
   { href: "/speakers", label: "Speakers", icon: Users2 },

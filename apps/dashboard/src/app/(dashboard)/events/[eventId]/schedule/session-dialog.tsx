@@ -12,11 +12,13 @@ import { Input } from "@eventkit/ui/input";
 import { Label } from "@eventkit/ui/label";
 import { Textarea } from "@eventkit/ui/textarea";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@eventkit/ui/sheet";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogBody,
+  DialogFooter,
+} from "@eventkit/ui/dialog";
 import {
   Popover,
   PopoverTrigger,
@@ -24,6 +26,7 @@ import {
 } from "@eventkit/ui/popover";
 import { Calendar } from "@eventkit/ui/calendar";
 import { useSaveSession } from "@/hooks/use-sessions";
+import { useConfirmClose } from "@/hooks/use-confirm-close";
 import { SpeakerSelect } from "./speaker-select";
 
 const sessionFormSchema = z.object({
@@ -72,7 +75,7 @@ type SelectedSpeaker = {
   sortOrder: number;
 };
 
-interface SessionSheetProps {
+interface SessionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   eventId: string;
@@ -80,13 +83,13 @@ interface SessionSheetProps {
   speakers: SpeakerData[];
 }
 
-export function SessionSheet({
+export function SessionDialog({
   open,
   onOpenChange,
   eventId,
   session,
   speakers,
-}: SessionSheetProps) {
+}: SessionDialogProps) {
   const saveSession = useSaveSession();
   const [selectedSpeakers, setSelectedSpeakers] = useState<SelectedSpeaker[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
@@ -97,7 +100,7 @@ export function SessionSheet({
     reset,
     setValue,
     watch,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isDirty },
   } = useForm<SessionFormValues>({
     resolver: zodResolver(sessionFormSchema) as Resolver<SessionFormValues>,
     defaultValues: {
@@ -111,6 +114,8 @@ export function SessionSheet({
       capacity: "",
     },
   });
+
+  const { handleOpenChange } = useConfirmClose({ isDirty, onOpenChange });
 
   useEffect(() => {
     if (open) {
@@ -185,140 +190,138 @@ export function SessionSheet({
   }
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-[480px] overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle>{session ? "Edit Session" : "Add Session"}</SheetTitle>
-        </SheetHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="title">Title *</Label>
-            <Input
-              id="title"
-              placeholder="Session title"
-              {...register("title")}
-            />
-            {errors.title && (
-              <p className="text-xs text-destructive">{errors.title.message}</p>
-            )}
-          </div>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <DialogHeader>
+            <DialogTitle>{session ? "Edit Session" : "Add Session"}</DialogTitle>
+          </DialogHeader>
+          <DialogBody className="space-y-5">
+            <div className="space-y-1.5">
+              <Label htmlFor="title">Title *</Label>
+              <Input
+                id="title"
+                placeholder="Session title"
+                {...register("title")}
+              />
+              {errors.title && (
+                <p className="text-xs text-destructive">{errors.title.message}</p>
+              )}
+            </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              placeholder="Session description"
-              rows={3}
-              {...register("description")}
-            />
-          </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                placeholder="Session description"
+                rows={3}
+                {...register("description")}
+              />
+            </div>
 
-          <div className="space-y-1.5">
-            <Label>Date *</Label>
-            <Popover>
-              <PopoverTrigger
-                className="flex h-8 w-full items-center justify-between rounded-lg border border-input bg-transparent px-2.5 text-sm"
-              >
-                <span className={dateValue ? "text-foreground" : "text-muted-foreground"}>
-                  {dateValue
-                    ? format(new Date(dateValue + "T00:00:00"), "MMMM d, yyyy")
-                    : "Select date"}
-                </span>
-                <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={(date) => {
-                    if (date) {
-                      setSelectedDate(date);
-                      setValue("date", format(date, "yyyy-MM-dd"));
-                    }
-                  }}
+            <div className="space-y-1.5">
+              <Label>Date *</Label>
+              <Popover>
+                <PopoverTrigger
+                  className="flex h-8 w-full items-center justify-between rounded-lg border border-input bg-transparent px-2.5 text-sm"
+                >
+                  <span className={dateValue ? "text-foreground" : "text-muted-foreground"}>
+                    {dateValue
+                      ? format(new Date(dateValue + "T00:00:00"), "MMMM d, yyyy")
+                      : "Select date"}
+                  </span>
+                  <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={(date) => {
+                      if (date) {
+                        setSelectedDate(date);
+                        setValue("date", format(date, "yyyy-MM-dd"));
+                      }
+                    }}
+                  />
+                </PopoverContent>
+              </Popover>
+              {errors.date && (
+                <p className="text-xs text-destructive">{errors.date.message}</p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="startTime">Start Time *</Label>
+                <Input
+                  id="startTime"
+                  type="time"
+                  {...register("startTime")}
                 />
-              </PopoverContent>
-            </Popover>
-            {errors.date && (
-              <p className="text-xs text-destructive">{errors.date.message}</p>
-            )}
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="startTime">Start Time *</Label>
-              <Input
-                id="startTime"
-                type="time"
-                {...register("startTime")}
-              />
-              {errors.startTime && (
-                <p className="text-xs text-destructive">{errors.startTime.message}</p>
-              )}
+                {errors.startTime && (
+                  <p className="text-xs text-destructive">{errors.startTime.message}</p>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="endTime">End Time *</Label>
+                <Input
+                  id="endTime"
+                  type="time"
+                  {...register("endTime")}
+                />
+                {errors.endTime && (
+                  <p className="text-xs text-destructive">{errors.endTime.message}</p>
+                )}
+              </div>
             </div>
+
             <div className="space-y-1.5">
-              <Label htmlFor="endTime">End Time *</Label>
+              <Label htmlFor="location">Location</Label>
               <Input
-                id="endTime"
-                type="time"
-                {...register("endTime")}
+                id="location"
+                placeholder="e.g. Main Hall, Room 101"
+                {...register("location")}
               />
-              {errors.endTime && (
-                <p className="text-xs text-destructive">{errors.endTime.message}</p>
-              )}
             </div>
-          </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="location">Location</Label>
-            <Input
-              id="location"
-              placeholder="e.g. Main Hall, Room 101"
-              {...register("location")}
-            />
-          </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="track">Track</Label>
+              <Input
+                id="track"
+                placeholder="e.g. Engineering, Design"
+                {...register("track")}
+              />
+            </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="track">Track</Label>
-            <Input
-              id="track"
-              placeholder="e.g. Engineering, Design"
-              {...register("track")}
-            />
-          </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="capacity">Capacity</Label>
+              <Input
+                id="capacity"
+                type="number"
+                min={1}
+                placeholder="Max attendees"
+                {...register("capacity")}
+              />
+            </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="capacity">Capacity</Label>
-            <Input
-              id="capacity"
-              type="number"
-              min={1}
-              placeholder="Max attendees"
-              {...register("capacity")}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label>Speakers</Label>
-            <SpeakerSelect
-              speakers={speakers}
-              selected={selectedSpeakers}
-              onChange={setSelectedSpeakers}
-              eventId={eventId}
-            />
-          </div>
-
-          <div className="pt-2">
-            <Button
-              type="submit"
-              disabled={isSubmitting || saveSession.isPending}
-              className="w-full bg-violet-600 hover:bg-violet-700 text-white"
-            >
+            <div className="space-y-1.5">
+              <Label>Speakers</Label>
+              <SpeakerSelect
+                speakers={speakers}
+                selected={selectedSpeakers}
+                onChange={setSelectedSpeakers}
+                eventId={eventId}
+              />
+            </div>
+          </DialogBody>
+          <DialogFooter>
+            <Button type="button" variant="ghost" className="text-stone-600 hover:bg-stone-50" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button type="submit" disabled={isSubmitting || saveSession.isPending} className="bg-violet-600 hover:bg-violet-700 text-white">
               {saveSession.isPending ? "Saving..." : session ? "Update Session" : "Create Session"}
             </Button>
-          </div>
+          </DialogFooter>
         </form>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -6,7 +6,7 @@ interface Attendee {
   paymentStatus: string;
   checkedInAt: Date | null;
   createdAt: Date;
-  ticketTypeId: string;
+  ticketTypeId: string | null;
 }
 
 export function exportAttendeesToCsv(
@@ -30,7 +30,7 @@ export function exportAttendeesToCsv(
     a.lastName,
     a.email,
     a.company ?? "",
-    ticketTypeMap[a.ticketTypeId] ?? "",
+    (a.ticketTypeId ? ticketTypeMap[a.ticketTypeId] : "") ?? "",
     a.paymentStatus,
     a.checkedInAt ? "Yes" : "No",
     new Date(a.createdAt).toISOString(),

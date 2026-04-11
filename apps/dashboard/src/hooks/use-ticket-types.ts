@@ -9,6 +9,10 @@ import {
   updateTicketTypeAction,
   deleteTicketTypeAction,
 } from "@/app/(dashboard)/events/[eventId]/actions";
+import {
+  duplicateTicketTypeAction,
+  reorderTicketTypesAction,
+} from "@/app/(dashboard)/events/[eventId]/tickets/actions";
 
 export function useTicketTypes(eventId: string) {
   return useQuery({
@@ -50,6 +54,31 @@ export function useDeleteTicketType() {
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: queryKeys.ticketTypes.all });
         queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
+      }
+    },
+  });
+}
+
+export function useDuplicateTicketType() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: duplicateTicketTypeAction,
+    onSuccess: (result) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.ticketTypes.all });
+        queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
+      }
+    },
+  });
+}
+
+export function useReorderTicketTypes() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: reorderTicketTypesAction,
+    onSuccess: (result) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.ticketTypes.all });
       }
     },
   });

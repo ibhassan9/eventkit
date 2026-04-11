@@ -66,7 +66,7 @@ export default async function RegisterPage({ params }: PageProps) {
             Register for {event.name}
           </h1>
           <p className="mt-2 text-sm text-zinc-500">
-            Select your ticket and fill in your details below.
+            Select your tickets and fill in your details below.
           </p>
         </div>
         <RegistrationForm
@@ -77,6 +77,14 @@ export default async function RegisterPage({ params }: PageProps) {
             name: t.name,
             description: t.description,
             price: t.price,
+            capacity: t.capacity,
+            soldCount: t.soldCount,
+            salesStart: t.salesStart,
+            salesEnd: t.salesEnd,
+            isVisible: t.isVisible,
+            allowWaitlist: t.allowWaitlist,
+            minPerOrder: t.minPerOrder,
+            maxPerOrder: t.maxPerOrder,
           }))}
           customFields={customFields}
           currency={event.currency}

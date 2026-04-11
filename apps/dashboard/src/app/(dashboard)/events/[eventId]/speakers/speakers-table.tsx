@@ -22,6 +22,7 @@ import {
   AlertDialogCancel,
 } from "@eventkit/ui/alert-dialog";
 import { useDeleteSpeaker } from "@/hooks/use-speakers";
+import { DataTableEmptyState } from "@/components/dashboard/data-table-empty-state";
 
 type SpeakerData = {
   id: string;
@@ -55,13 +56,11 @@ export function SpeakersTable({ speakers, eventId, onEditSpeaker }: SpeakersTabl
 
   if (speakers.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-24">
-        <Users2 className="h-10 w-10 text-stone-300" />
-        <h3 className="mt-4 text-sm font-medium text-stone-900">No speakers yet</h3>
-        <p className="mt-1 text-sm text-stone-500">
-          Add speakers to feature them on your event website
-        </p>
-      </div>
+      <DataTableEmptyState
+        icon={Users2}
+        title="No speakers yet"
+        description="Add speakers to feature them on your event website"
+      />
     );
   }
 
@@ -86,11 +85,10 @@ export function SpeakersTable({ speakers, eventId, onEditSpeaker }: SpeakersTabl
           <table className="w-full caption-bottom text-sm">
             <thead>
               <tr className="border-b bg-stone-50">
-                {["", "Name", "Title", "Company", "Sessions", ""].map((h, i) => (
-                  <th key={i} className="h-10 px-3 text-left font-medium">
-                    {h}
-                  </th>
-                ))}
+                <th className="h-10 px-3 text-left text-xs font-medium uppercase tracking-wide text-stone-400">Speaker</th>
+                <th className="h-10 px-3 text-left text-xs font-medium uppercase tracking-wide text-stone-400">Email</th>
+                <th className="h-10 px-3 text-left text-xs font-medium uppercase tracking-wide text-stone-400">Sessions</th>
+                <th className="h-10 px-3 text-left text-xs font-medium uppercase tracking-wide text-stone-400" />
               </tr>
             </thead>
             <tbody>
@@ -99,24 +97,34 @@ export function SpeakersTable({ speakers, eventId, onEditSpeaker }: SpeakersTabl
                 return (
                   <tr
                     key={speaker.id}
-                    className="border-b hover:bg-stone-50 cursor-pointer transition-colors"
+                    className="border-b border-stone-100 hover:bg-stone-50/50 cursor-pointer transition-colors text-[13px] text-stone-700"
                     onClick={() => onEditSpeaker(speaker)}
                   >
-                    <td className="px-3 py-2 w-12">
-                      <Avatar size="sm">
-                        {speaker.headshotUrl && (
-                          <AvatarImage src={speaker.headshotUrl} alt={`${speaker.firstName} ${speaker.lastName}`} />
-                        )}
-                        <AvatarFallback className="text-xs">{initials}</AvatarFallback>
-                      </Avatar>
+                    <td className="px-3 py-3">
+                      <div className="flex items-center gap-3">
+                        <Avatar size="sm">
+                          {speaker.headshotUrl && (
+                            <AvatarImage src={speaker.headshotUrl} alt={`${speaker.firstName} ${speaker.lastName}`} />
+                          )}
+                          <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="font-medium text-stone-900">{speaker.firstName} {speaker.lastName}</div>
+                          {(speaker.title || speaker.company) && (
+                            <div className="text-xs text-stone-400">
+                              {[speaker.title, speaker.company].filter(Boolean).join(" at ")}
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </td>
-                    <td className="px-3 py-2 font-medium">
-                      {speaker.firstName} {speaker.lastName}
+                    <td className="px-3 py-3 text-stone-500">{speaker.email ?? "\u2014"}</td>
+                    <td className="px-3 py-3 text-stone-500">
+                      {speaker.sessionSpeakers.length === 0
+                        ? <span className="text-stone-400">No sessions</span>
+                        : `${speaker.sessionSpeakers.length} session${speaker.sessionSpeakers.length !== 1 ? "s" : ""}`}
                     </td>
-                    <td className="px-3 py-2 text-stone-500">{speaker.title ?? ""}</td>
-                    <td className="px-3 py-2 text-stone-500">{speaker.company ?? ""}</td>
-                    <td className="px-3 py-2 text-stone-500">{speaker.sessionSpeakers.length}</td>
-                    <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
                         <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-md p-1 hover:bg-stone-100">
                           <MoreHorizontal className="h-4 w-4" />

@@ -6,7 +6,7 @@ import { Button } from "@eventkit/ui/button";
 import { Input } from "@eventkit/ui/input";
 import { Search, Download, ChevronLeft, ChevronRight, UserPlus } from "lucide-react";
 import { AttendeeSheet } from "./attendee-sheet";
-import { AddAttendeeSheet } from "./add-attendee-sheet";
+import { AddAttendeeDialog } from "./add-attendee-dialog";
 import { AttendeeFilters } from "./attendee-filters";
 import { AttendeesTableRows } from "./attendees-table-rows";
 import { exportAttendeesToCsv } from "./export-csv";
@@ -21,7 +21,7 @@ interface Attendee {
   paymentStatus: "pending" | "paid" | "free" | "refunded";
   checkedInAt: Date | null;
   createdAt: Date;
-  ticketTypeId: string;
+  ticketTypeId: string | null;
   jobTitle: string | null;
   userId?: string | null;
 }
@@ -125,13 +125,13 @@ export function AttendeesTable(props: AttendeesTableProps) {
       {selected && (
         <AttendeeSheet
           attendee={selected}
-          ticketTypeName={ticketTypeMap[selected.ticketTypeId] ?? "-"}
+          ticketTypeName={selected.ticketTypeId ? ticketTypeMap[selected.ticketTypeId] ?? "-" : "-"}
           open={!!selectedId}
           onOpenChange={(open) => { if (!open) setSelectedId(null); }}
           eventId={eventId}
         />
       )}
-      <AddAttendeeSheet
+      <AddAttendeeDialog
         open={addSheetOpen}
         onOpenChange={setAddSheetOpen}
         eventId={eventId}

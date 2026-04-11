@@ -5,6 +5,7 @@ import { useEventWithStats } from "@/hooks/use-events";
 import { EventOverviewStats } from "./overview-stats";
 import { EventOverviewActions } from "./overview-actions";
 import { RecentAttendees } from "./recent-attendees";
+import { RevenueByTicket } from "./revenue-by-ticket";
 
 interface EventOverviewClientProps {
   eventId: string;
@@ -29,14 +30,18 @@ export function EventOverviewClient({ eventId }: EventOverviewClientProps) {
     );
   }
 
-  const ticketsRemaining = event.maxAttendees
-    ? event.maxAttendees - event.totalAttendees
-    : null;
-
   const checkInRate =
     event.totalAttendees > 0
       ? Math.round((event.checkedIn / event.totalAttendees) * 100)
       : 0;
+
+  const ticketsSold = event.ticketsSold ?? 0;
+
+  const ticketTypeRevenue = event.ticketTypes.map((tt) => ({
+    name: tt.name,
+    soldCount: tt.soldCount,
+    revenue: tt.soldCount * tt.price,
+  }));
 
   return (
     <div className="space-y-6 p-6">
@@ -53,10 +58,17 @@ export function EventOverviewClient({ eventId }: EventOverviewClientProps) {
       <EventOverviewStats
         totalAttendees={event.totalAttendees}
         totalRevenue={event.totalRevenue}
+        ticketsSold={ticketsSold}
         checkInRate={checkInRate}
-        ticketsRemaining={ticketsRemaining}
         currency={event.currency}
       />
+
+      {ticketTypeRevenue.length > 0 && (
+        <RevenueByTicket
+          ticketTypes={ticketTypeRevenue}
+          currency={event.currency}
+        />
+      )}
 
       <RecentAttendees
         attendees={event.attendees.slice(0, 5)}

@@ -12,6 +12,7 @@ import {
 import { relations } from "drizzle-orm";
 import { events } from "./events";
 import { ticketTypes } from "./ticket-types";
+import { orders } from "./orders";
 
 export const paymentStatusEnum = pgEnum("payment_status", [
   "pending",
@@ -55,7 +56,7 @@ export const attendees = pgTable(
   ]
 );
 
-export const attendeesRelations = relations(attendees, ({ one }) => ({
+export const attendeesRelations = relations(attendees, ({ one, many }) => ({
   event: one(events, {
     fields: [attendees.eventId],
     references: [events.id],
@@ -64,4 +65,5 @@ export const attendeesRelations = relations(attendees, ({ one }) => ({
     fields: [attendees.ticketTypeId],
     references: [ticketTypes.id],
   }),
+  orders: many(orders),
 }));

@@ -53,7 +53,7 @@ export default async function MyRegistrationPage({ params }: PageProps) {
             qrCode: attendee.qrCode,
             paymentStatus: attendee.paymentStatus,
             customFieldValues: (attendee.customFieldValues as Record<string, string>) ?? {},
-            ticketTypeName: attendee.ticketType.name,
+            ticketTypeName: attendee.ticketType?.name ?? "General",
           }}
           event={{
             name: event.name,

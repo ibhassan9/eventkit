@@ -61,7 +61,14 @@ export async function getAttendeesByEventId(
 export async function getAttendeeById(id: string) {
   return db.query.attendees.findFirst({
     where: eq(attendees.id, id),
-    with: { ticketType: true },
+    with: {
+      ticketType: true,
+      orders: {
+        with: {
+          items: { with: { ticketType: true } },
+        },
+      },
+    },
   });
 }
 
@@ -87,7 +94,7 @@ export async function getAttendeeByUserAndEvent(userId: string, eventId: string)
 
 export async function createAttendee(data: {
   eventId: string;
-  ticketTypeId: string;
+  ticketTypeId?: string;
   firstName: string;
   lastName: string;
   email: string;

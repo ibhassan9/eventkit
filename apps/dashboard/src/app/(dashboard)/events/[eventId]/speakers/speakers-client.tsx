@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, Plus, LayoutGrid, List } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { Button } from "@eventkit/ui/button";
 import { useSpeakers } from "@/hooks/use-speakers";
-import { SpeakersGrid } from "./speakers-grid";
+import { DataTableToolbar } from "@/components/dashboard/data-table-toolbar";
+import { useDebouncedValue } from "@/hooks/use-debounce";
 import { SpeakersTable } from "./speakers-table";
-import { SpeakerSheet } from "./speaker-sheet";
+import { SpeakerDialog } from "./speaker-dialog";
 
 interface SpeakersClientProps {
   eventId: string;
@@ -34,9 +35,16 @@ type SpeakerData = {
 
 export function SpeakersClient({ eventId }: SpeakersClientProps) {
   const { data: speakers, isLoading, error } = useSpeakers(eventId);
-  const [view, setView] = useState<"grid" | "table">("grid");
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingSpeaker, setEditingSpeaker] = useState<SpeakerData | null>(null);
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
+
+  const filteredSpeakers = ((speakers ?? []) as SpeakerData[]).filter((speaker) => {
+    if (!debouncedSearch) return true;
+    const fullName = `${speaker.firstName} ${speaker.lastName}`.toLowerCase();
+    return fullName.includes(debouncedSearch.toLowerCase());
+  });
 
   function handleAddSpeaker() {
     setEditingSpeaker(null);
@@ -82,50 +90,32 @@ export function SpeakersClient({ eventId }: SpeakersClientProps) {
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Speakers</h1>
-          <p className="text-sm text-muted-foreground">
-            Manage speakers for your event
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center rounded-lg border bg-stone-50 p-0.5">
-            <button
-              onClick={() => setView("grid")}
-              className={`rounded-md p-1.5 transition-colors ${view === "grid" ? "bg-white shadow-sm text-stone-900" : "text-stone-400 hover:text-stone-600"}`}
-            >
-              <LayoutGrid className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => setView("table")}
-              className={`rounded-md p-1.5 transition-colors ${view === "table" ? "bg-white shadow-sm text-stone-900" : "text-stone-400 hover:text-stone-600"}`}
-            >
-              <List className="h-4 w-4" />
-            </button>
-          </div>
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Speakers</h1>
+        <p className="text-sm text-muted-foreground">
+          Manage speakers for your event
+        </p>
+      </div>
+
+      <DataTableToolbar
+        searchPlaceholder="Search speakers..."
+        searchValue={search}
+        onSearchChange={setSearch}
+        actions={
           <Button onClick={handleAddSpeaker} className="bg-violet-600 hover:bg-violet-700 text-white">
             <Plus className="mr-1.5 h-4 w-4" />
             Add Speaker
           </Button>
-        </div>
-      </div>
+        }
+      />
 
-      {view === "grid" ? (
-        <SpeakersGrid
-          speakers={(speakers ?? []) as SpeakerData[]}
-          eventId={eventId}
-          onEditSpeaker={handleEditSpeaker}
-        />
-      ) : (
-        <SpeakersTable
-          speakers={(speakers ?? []) as SpeakerData[]}
-          eventId={eventId}
-          onEditSpeaker={handleEditSpeaker}
-        />
-      )}
+      <SpeakersTable
+        speakers={filteredSpeakers}
+        eventId={eventId}
+        onEditSpeaker={handleEditSpeaker}
+      />
 
-      <SpeakerSheet
+      <SpeakerDialog
         open={sheetOpen}
         onOpenChange={(open) => { if (!open) handleSheetClose(); }}
         eventId={eventId}

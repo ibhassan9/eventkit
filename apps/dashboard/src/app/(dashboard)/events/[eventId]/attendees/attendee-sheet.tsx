@@ -32,14 +32,35 @@ import {
   KeyRound,
   Loader2,
   UserPlus,
+  ExternalLink,
 } from "lucide-react";
-import { formatDate } from "@eventkit/lib/utils";
+import { formatDate, formatCurrency } from "@eventkit/lib/utils";
 import {
   resetAttendeePassword,
   getAttendeeOtherEvents,
   getAttendeeUserAccount,
   createAttendeeAccount,
 } from "./actions";
+
+interface OrderItem {
+  ticketTypeId: string;
+  quantity: number;
+  unitPrice: number;
+  subtotal: number;
+  ticketType: {
+    name: string;
+  };
+}
+
+interface Order {
+  id: string;
+  paymentStatus: string;
+  totalAmount: number;
+  currency: string;
+  stripeCheckoutSessionId: string | null;
+  createdAt: Date;
+  items: OrderItem[];
+}
 
 interface Attendee {
   id: string;
@@ -52,6 +73,7 @@ interface Attendee {
   checkedInAt: Date | null;
   createdAt: Date;
   userId?: string | null;
+  orders?: Order[];
 }
 
 interface OtherEvent {
@@ -88,6 +110,7 @@ const paymentStyles: Record<string, string> = {
   free: "bg-blue-100 text-blue-700",
   pending: "bg-amber-100 text-amber-700",
   refunded: "bg-red-100 text-red-700",
+  partially_refunded: "bg-amber-100 text-amber-700",
 };
 
 export function AttendeeSheet({
@@ -107,7 +130,6 @@ export function AttendeeSheet({
 
   useEffect(() => {
     if (open) {
-      // Fetch user account data
       setLoadingUserAccount(true);
       getAttendeeUserAccount({ attendeeId: attendee.id, eventId })
         .then((result) => {
@@ -117,7 +139,6 @@ export function AttendeeSheet({
         })
         .finally(() => setLoadingUserAccount(false));
 
-      // Fetch other events if user is linked
       if (attendee.userId) {
         setLoadingOtherEvents(true);
         getAttendeeOtherEvents({ eventId, userId: attendee.userId })
@@ -201,11 +222,16 @@ export function AttendeeSheet({
     toast.success("Credentials copied to clipboard");
   }
 
+  // Get order for this attendee
+  const order = attendee.orders && attendee.orders.length > 0 ? attendee.orders[0] : null;
+
   const fields = [
     { label: "Email", value: attendee.email },
     { label: "Company", value: attendee.company ?? "-" },
     { label: "Job Title", value: attendee.jobTitle ?? "-" },
-    ...(ticketTypeName ? [{ label: "Ticket Type", value: ticketTypeName }] : []),
+    ...(!order && ticketTypeName
+      ? [{ label: "Ticket Type", value: ticketTypeName }]
+      : []),
     {
       label: "Payment Status",
       value: (
@@ -226,6 +252,86 @@ export function AttendeeSheet({
     { label: "Registered", value: formatDate(attendee.createdAt) },
   ];
 
+  function renderOrderBreakdown() {
+    if (!order) {
+      return (
+        <p className="text-sm text-muted-foreground">
+          No order associated with this attendee.
+        </p>
+      );
+    }
+
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium text-stone-700">
+            Order #{order.id.slice(0, 8)}
+          </span>
+          <Badge
+            variant="secondary"
+            className={paymentStyles[order.paymentStatus] ?? "bg-stone-100 text-stone-700"}
+          >
+            {order.paymentStatus === "paid"
+              ? "Paid"
+              : order.paymentStatus === "free"
+                ? "Free"
+                : order.paymentStatus}
+          </Badge>
+        </div>
+
+        <div className="space-y-1.5">
+          {order.items.map((item) => (
+            <div
+              key={item.ticketTypeId}
+              className="flex items-center justify-between text-sm"
+            >
+              <span className="text-stone-600">
+                {item.quantity > 1 ? `${item.quantity}× ` : ""}
+                {item.ticketType.name}
+              </span>
+              <span className="font-medium text-stone-900">
+                {item.subtotal === 0
+                  ? "Free"
+                  : formatCurrency(item.subtotal, order.currency)}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <div className="border-t border-stone-200 pt-2">
+          <div className="flex items-center justify-between">
+            <span className="font-medium text-stone-900">Total</span>
+            <span className="font-semibold text-stone-900">
+              {order.totalAmount === 0
+                ? "Free"
+                : formatCurrency(order.totalAmount, order.currency)}
+            </span>
+          </div>
+        </div>
+
+        <p className="text-xs text-stone-400">
+          {order.paymentStatus === "paid"
+            ? `Paid via Stripe · ${formatDate(order.createdAt)}`
+            : order.paymentStatus === "free"
+              ? `Free registration · ${formatDate(order.createdAt)}`
+              : formatDate(order.createdAt)}
+        </p>
+
+        {order.stripeCheckoutSessionId && (
+          <a
+            href={`https://dashboard.stripe.com/payments/${order.stripeCheckoutSessionId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-md border border-stone-200 bg-white px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-50"
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+            View in Stripe
+          </a>
+        )}
+      </div>
+    );
+  }
+
   function renderLoginCredentials() {
     if (loadingUserAccount) {
       return (
@@ -236,7 +342,6 @@ export function AttendeeSheet({
       );
     }
 
-    // State C: No linked user account
     if (!attendee.userId || !userAccount) {
       return (
         <div className="space-y-3">
@@ -260,7 +365,6 @@ export function AttendeeSheet({
       );
     }
 
-    // State A: Temp password (must change password AND has temp password)
     if (userAccount.mustChangePassword && userAccount.temporaryPassword) {
       return (
         <div className="space-y-3">
@@ -277,7 +381,6 @@ export function AttendeeSheet({
               </button>
             </div>
           </div>
-
           <div>
             <p className="text-xs text-muted-foreground">Temporary Password</p>
             <div className="mt-0.5 flex items-center gap-2">
@@ -306,14 +409,12 @@ export function AttendeeSheet({
               </button>
             </div>
           </div>
-
           <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
             <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" />
             <p className="text-xs text-amber-800">
               This attendee has not set their own password yet.
             </p>
           </div>
-
           <Button
             variant="outline"
             size="sm"
@@ -323,7 +424,6 @@ export function AttendeeSheet({
             <Copy className="mr-1.5 h-3.5 w-3.5" />
             Copy All Credentials
           </Button>
-
           <ResetPasswordButton
             resetting={resettingPassword}
             onConfirm={handleResetPassword}
@@ -332,19 +432,16 @@ export function AttendeeSheet({
       );
     }
 
-    // State B: Password set by attendee
     return (
       <div className="space-y-3">
         <div>
           <p className="text-xs text-muted-foreground">Email</p>
           <p className="mt-0.5 text-sm">{userAccount.email ?? attendee.email}</p>
         </div>
-
         <div className="flex items-center gap-1.5 text-sm text-green-600">
           <Check className="h-3.5 w-3.5" />
           Password set by attendee
         </div>
-
         <div>
           <p className="text-xs text-muted-foreground">Last login</p>
           <p className="mt-0.5 text-sm">
@@ -353,7 +450,6 @@ export function AttendeeSheet({
               : "Never logged in"}
           </p>
         </div>
-
         <ResetPasswordButton
           resetting={resettingPassword}
           onConfirm={handleResetPassword}
@@ -381,6 +477,14 @@ export function AttendeeSheet({
               <div className="mt-1 text-sm">{field.value}</div>
             </div>
           ))}
+        </div>
+
+        <Separator />
+        <div className="space-y-4 p-4">
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Order Details
+          </p>
+          {renderOrderBreakdown()}
         </div>
 
         <Separator />

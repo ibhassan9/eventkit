@@ -18,13 +18,16 @@ export async function getTicketTypeById(id: string) {
 export async function createTicketType(data: {
   eventId: string;
   name: string;
-  description?: string;
+  description?: string | null;
   price: number;
-  capacity?: number;
-  salesStart?: Date;
-  salesEnd?: Date;
+  capacity?: number | null;
+  salesStart?: Date | null;
+  salesEnd?: Date | null;
   sortOrder?: number;
   isVisible?: boolean;
+  allowWaitlist?: boolean;
+  minPerOrder?: number;
+  maxPerOrder?: number;
 }) {
   const [ticket] = await db.insert(ticketTypes).values(data).returning();
   return ticket;
@@ -37,10 +40,14 @@ export async function updateTicketType(
     description: string | null;
     price: number;
     capacity: number | null;
+    soldCount: number;
     salesStart: Date | null;
     salesEnd: Date | null;
     sortOrder: number;
     isVisible: boolean;
+    allowWaitlist: boolean;
+    minPerOrder: number;
+    maxPerOrder: number;
   }>
 ) {
   const [ticket] = await db
@@ -53,4 +60,12 @@ export async function updateTicketType(
 
 export async function deleteTicketType(id: string) {
   await db.delete(ticketTypes).where(eq(ticketTypes.id, id));
+}
+
+export async function canDeleteTicketType(id: string) {
+  const ticket = await db.query.ticketTypes.findFirst({
+    where: eq(ticketTypes.id, id),
+  });
+  if (!ticket) return false;
+  return ticket.soldCount === 0;
 }

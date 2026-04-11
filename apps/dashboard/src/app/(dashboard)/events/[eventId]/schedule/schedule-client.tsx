@@ -5,8 +5,10 @@ import { Loader2, Plus } from "lucide-react";
 import { Button } from "@eventkit/ui/button";
 import { useSessions } from "@/hooks/use-sessions";
 import { useSpeakers } from "@/hooks/use-speakers";
+import { DataTableToolbar } from "@/components/dashboard/data-table-toolbar";
+import { useDebouncedValue } from "@/hooks/use-debounce";
 import { ScheduleTable } from "./schedule-table";
-import { SessionSheet } from "./session-sheet";
+import { SessionDialog } from "./session-dialog";
 
 interface ScheduleClientProps {
   eventId: string;
@@ -38,6 +40,13 @@ export function ScheduleClient({ eventId }: ScheduleClientProps) {
   const { data: speakers } = useSpeakers(eventId);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingSession, setEditingSession] = useState<SessionData | null>(null);
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
+
+  const filteredSessions = ((sessions ?? []) as SessionData[]).filter((session) => {
+    if (!debouncedSearch) return true;
+    return session.title.toLowerCase().includes(debouncedSearch.toLowerCase());
+  });
 
   function handleAddSession() {
     setEditingSession(null);
@@ -83,24 +92,31 @@ export function ScheduleClient({ eventId }: ScheduleClientProps) {
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Schedule</h1>
-          <p className="text-sm text-muted-foreground">
-            Manage your event schedule and sessions
-          </p>
-        </div>
-        <Button onClick={handleAddSession} className="bg-violet-600 hover:bg-violet-700 text-white">
-          <Plus className="mr-1.5 h-4 w-4" />
-          Add Session
-        </Button>
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Schedule</h1>
+        <p className="text-sm text-muted-foreground">
+          Manage your event schedule and sessions
+        </p>
       </div>
+
+      <DataTableToolbar
+        searchPlaceholder="Search sessions..."
+        searchValue={search}
+        onSearchChange={setSearch}
+        actions={
+          <Button onClick={handleAddSession} className="bg-violet-600 hover:bg-violet-700 text-white">
+            <Plus className="mr-1.5 h-4 w-4" />
+            Add Session
+          </Button>
+        }
+      />
+
       <ScheduleTable
-        sessions={(sessions ?? []) as SessionData[]}
+        sessions={filteredSessions}
         eventId={eventId}
         onEditSession={handleEditSession}
       />
-      <SessionSheet
+      <SessionDialog
         open={sheetOpen}
         onOpenChange={(open) => { if (!open) handleSheetClose(); }}
         eventId={eventId}

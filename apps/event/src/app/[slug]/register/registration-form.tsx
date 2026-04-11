@@ -6,8 +6,9 @@ import { toast } from "sonner";
 import { Button } from "@eventkit/ui/button";
 import { formatCurrency } from "@eventkit/lib/utils";
 import type { CustomField } from "@eventkit/types";
-import { registerFree, createCheckout } from "./actions";
-import { TicketSelector } from "./ticket-selector";
+import { registerFree, createCheckout, registerFreeCart, createCartCheckout } from "./actions";
+import { TicketCart } from "./ticket-cart";
+import { OrderSummary } from "./order-summary";
 import { AttendeeDetails } from "./attendee-details";
 
 interface TicketType {
@@ -15,6 +16,14 @@ interface TicketType {
   name: string;
   description: string | null;
   price: number;
+  capacity: number | null;
+  soldCount: number;
+  salesStart: Date | null;
+  salesEnd: Date | null;
+  isVisible: boolean;
+  allowWaitlist: boolean;
+  minPerOrder: number;
+  maxPerOrder: number;
 }
 
 interface RegistrationFormProps {
@@ -38,17 +47,47 @@ export function RegistrationForm({
 }: RegistrationFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [selectedTicketId, setSelectedTicketId] = useState(ticketTypes[0]?.id ?? "");
+  const [cart, setCart] = useState<Record<string, number>>({});
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [customValues, setCustomValues] = useState<Record<string, string>>({});
 
-  const selectedTicket = ticketTypes.find((t) => t.id === selectedTicketId);
-  const isFree = selectedTicket?.price === 0;
+  const cartItems = ticketTypes
+    .filter((t) => (cart[t.id] ?? 0) > 0)
+    .map((t) => ({
+      id: t.id,
+      name: t.name,
+      quantity: cart[t.id]!,
+      unitPrice: t.price,
+    }));
+
+  const totalQuantity = cartItems.reduce((sum, i) => sum + i.quantity, 0);
+  const totalAmount = cartItems.reduce(
+    (sum, i) => sum + i.unitPrice * i.quantity,
+    0
+  );
+  const allFree = totalAmount === 0 && totalQuantity > 0;
+
+  function handleCartChange(ticketTypeId: string, quantity: number) {
+    setCart((prev) => {
+      const next = { ...prev };
+      if (quantity === 0) {
+        delete next[ticketTypeId];
+      } else {
+        next[ticketTypeId] = quantity;
+      }
+      return next;
+    });
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    if (totalQuantity === 0) {
+      toast.error("Please select at least one ticket");
+      return;
+    }
 
     const requiredCustom = customFields.filter((f) => f.required);
     for (const field of requiredCustom) {
@@ -59,29 +98,38 @@ export function RegistrationForm({
     }
 
     startTransition(async () => {
+      const items = cartItems.map((i) => ({
+        ticketTypeId: i.id,
+        quantity: i.quantity,
+      }));
+
       const payload = {
         eventId,
-        ticketTypeId: selectedTicketId,
+        items,
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         email: email.trim().toLowerCase(),
         customFieldValues: customValues,
       };
 
-      if (isFree) {
-        const result = await registerFree(payload);
+      if (allFree) {
+        const result = await registerFreeCart(payload);
         if (result.success) {
           toast.success("Registration complete!");
-          router.push(`/${eventSlug}/register/success?qr=${result.data.qrCode}`);
+          router.push(
+            `/${eventSlug}/register/success?qr=${result.data.qrCode}`
+          );
         } else {
           toast.error(result.error);
         }
       } else {
-        const result = await createCheckout(payload);
+        const result = await createCartCheckout(payload);
         if (result.success && result.data.checkoutUrl) {
           window.location.href = result.data.checkoutUrl;
         } else {
-          toast.error(result.success ? "Could not create checkout" : result.error);
+          toast.error(
+            result.success ? "Could not create checkout" : result.error
+          );
         }
       }
     });
@@ -89,13 +137,17 @@ export function RegistrationForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
-      <TicketSelector
+      <TicketCart
         ticketTypes={ticketTypes}
-        selectedId={selectedTicketId}
-        onSelect={setSelectedTicketId}
+        cart={cart}
+        onCartChange={handleCartChange}
         currency={currency}
-        secondaryColor={secondaryColor}
+        primaryColor={secondaryColor}
       />
+
+      {totalQuantity > 0 && (
+        <OrderSummary items={cartItems} currency={currency} />
+      )}
 
       <AttendeeDetails
         firstName={firstName}
@@ -114,15 +166,15 @@ export function RegistrationForm({
 
       <Button
         type="submit"
-        disabled={isPending || !selectedTicketId}
+        disabled={isPending || totalQuantity === 0}
         className="w-full py-3 text-sm font-semibold text-white"
         style={{ backgroundColor: secondaryColor }}
       >
         {isPending
           ? "Processing..."
-          : isFree
+          : allFree
             ? "Complete Registration"
-            : `Pay ${selectedTicket ? formatCurrency(selectedTicket.price, currency) : ""}`}
+            : `Continue to Payment — ${formatCurrency(totalAmount, currency)}`}
       </Button>
     </form>
   );

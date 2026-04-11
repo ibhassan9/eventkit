@@ -36,18 +36,31 @@ export async function getEventBySlug(slug: string) {
 export async function getEventWithStats(eventId: string) {
   const event = await db.query.events.findFirst({
     where: eq(events.id, eventId),
-    with: { ticketTypes: true, attendees: true },
+    with: { ticketTypes: true, attendees: true, orders: true },
   });
   if (!event) return null;
 
   const totalAttendees = event.attendees.length;
   const checkedIn = event.attendees.filter((a) => a.checkedInAt).length;
-  const totalRevenue = event.attendees.reduce(
+
+  // Use orders for revenue if any exist, otherwise fall back to legacy attendee amountPaid
+  const paidOrders = event.orders.filter(
+    (o) => o.paymentStatus === "paid" || o.paymentStatus === "free"
+  );
+  const orderRevenue = paidOrders.reduce((sum, o) => sum + o.totalAmount, 0);
+  const attendeeRevenue = event.attendees.reduce(
     (sum, a) => sum + a.amountPaid,
     0
   );
+  const totalRevenue =
+    event.orders.length > 0 ? orderRevenue : attendeeRevenue;
 
-  return { ...event, totalAttendees, checkedIn, totalRevenue };
+  const ticketsSold = event.ticketTypes.reduce(
+    (sum, tt) => sum + tt.soldCount,
+    0
+  );
+
+  return { ...event, totalAttendees, checkedIn, totalRevenue, ticketsSold };
 }
 
 export async function createEvent(data: {
