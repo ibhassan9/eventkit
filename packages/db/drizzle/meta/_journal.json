@@ -15,6 +15,20 @@
       "when": 1775838311290,
       "tag": "0001_dark_frog_thor",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1775841721416,
+      "tag": "0002_busy_prism",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1775842184653,
+      "tag": "0003_make_ticket_type_optional",
+      "breakpoints": true
     }
   ]
 }

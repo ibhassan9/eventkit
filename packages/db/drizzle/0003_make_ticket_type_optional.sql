@@ -1,0 +1,1 @@
+ALTER TABLE "attendees" ALTER COLUMN "ticket_type_id" DROP NOT NULL;

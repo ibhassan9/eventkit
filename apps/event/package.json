@@ -16,6 +16,8 @@
     "@eventkit/types": "workspace:*",
     "@eventkit/ui": "workspace:*",
     "@hookform/resolvers": "^5.2.2",
+    "@supabase/ssr": "^0.10.2",
+    "@supabase/supabase-js": "^2.103.0",
     "date-fns": "^4.1.0",
     "lucide-react": "^1.8.0",
     "next": "15.5.15",

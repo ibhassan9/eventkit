@@ -9,6 +9,7 @@ import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -148,9 +149,11 @@ export function EventNav({
                   <ChevronDown className="size-3" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" sideOffset={8} className="min-w-[200px]">
-                  <DropdownMenuLabel className="font-normal text-xs text-zinc-500 truncate">
-                    Logged in as {user.email}
-                  </DropdownMenuLabel>
+                  <DropdownMenuGroup>
+                    <DropdownMenuLabel className="font-normal text-xs text-zinc-500 truncate">
+                      Logged in as {user.email}
+                    </DropdownMenuLabel>
+                  </DropdownMenuGroup>
                   <DropdownMenuSeparator />
                   {isRegistered && (
                     <DropdownMenuItem

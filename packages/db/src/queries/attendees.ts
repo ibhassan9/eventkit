@@ -1,6 +1,6 @@
 import { eq, and, or, ilike, sql, desc } from "drizzle-orm";
 import { db } from "../client";
-import { attendees, users } from "../schema";
+import { attendees } from "../schema";
 
 export async function getAttendeesByEventId(
   eventId: string,
@@ -102,67 +102,6 @@ export async function createAttendee(data: {
 }) {
   const [attendee] = await db.insert(attendees).values(data).returning();
   return attendee;
-}
-
-export async function createAttendeeWithUser(data: {
-  eventId: string;
-  ticketTypeId: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  company?: string;
-  jobTitle?: string;
-  customFieldValues?: Record<string, string>;
-  paymentStatus?: "pending" | "paid" | "free" | "refunded";
-  amountPaid?: number;
-  qrCode: string;
-  stripeCheckoutSessionId?: string;
-  passwordHash: string;
-  temporaryPassword: string;
-}) {
-  const { passwordHash, temporaryPassword, ...attendeeData } = data;
-
-  return db.transaction(async (tx) => {
-    const existingUser = await tx.query.users.findFirst({
-      where: eq(users.email, data.email),
-    });
-
-    let user;
-    let isNewUser = false;
-
-    if (existingUser) {
-      user = existingUser;
-    } else {
-      const [newUser] = await tx
-        .insert(users)
-        .values({
-          email: data.email,
-          passwordHash,
-          firstName: data.firstName,
-          lastName: data.lastName,
-          temporaryPassword,
-          mustChangePassword: true,
-        })
-        .returning();
-      user = newUser;
-      isNewUser = true;
-    }
-
-    const [attendee] = await tx
-      .insert(attendees)
-      .values({
-        ...attendeeData,
-        userId: user.id,
-      })
-      .returning();
-
-    return {
-      attendee,
-      user,
-      isNewUser,
-      temporaryPassword: isNewUser ? temporaryPassword : undefined,
-    };
-  });
 }
 
 export async function getAttendeesByUserId(userId: string) {

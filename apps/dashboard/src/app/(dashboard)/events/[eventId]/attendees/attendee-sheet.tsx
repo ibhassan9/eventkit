@@ -12,9 +12,34 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@eventkit/ui/sheet";
-import { Copy, KeyRound, Loader2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@eventkit/ui/alert-dialog";
+import {
+  Eye,
+  EyeOff,
+  AlertTriangle,
+  Check,
+  Copy,
+  KeyRound,
+  Loader2,
+  UserPlus,
+} from "lucide-react";
 import { formatDate } from "@eventkit/lib/utils";
-import { resetAttendeePassword, getAttendeeOtherEvents } from "./actions";
+import {
+  resetAttendeePassword,
+  getAttendeeOtherEvents,
+  getAttendeeUserAccount,
+  createAttendeeAccount,
+} from "./actions";
 
 interface Attendee {
   id: string;
@@ -41,9 +66,18 @@ interface OtherEvent {
   };
 }
 
+interface UserAccount {
+  id: string;
+  email: string | undefined;
+  createdAt: string;
+  lastSignInAt: string | null;
+  mustChangePassword: boolean;
+  temporaryPassword: string | null;
+}
+
 interface AttendeeSheetProps {
   attendee: Attendee;
-  ticketTypeName: string;
+  ticketTypeName?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   eventId: string;
@@ -64,26 +98,55 @@ export function AttendeeSheet({
   eventId,
 }: AttendeeSheetProps) {
   const [resettingPassword, setResettingPassword] = useState(false);
-  const [newTempPassword, setNewTempPassword] = useState<string | null>(null);
   const [otherEvents, setOtherEvents] = useState<OtherEvent[]>([]);
   const [loadingOtherEvents, setLoadingOtherEvents] = useState(false);
+  const [userAccount, setUserAccount] = useState<UserAccount | null>(null);
+  const [loadingUserAccount, setLoadingUserAccount] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [creatingAccount, setCreatingAccount] = useState(false);
 
   useEffect(() => {
-    if (open && attendee.userId) {
-      setLoadingOtherEvents(true);
-      getAttendeeOtherEvents({ eventId, userId: attendee.userId })
+    if (open) {
+      // Fetch user account data
+      setLoadingUserAccount(true);
+      getAttendeeUserAccount({ attendeeId: attendee.id, eventId })
         .then((result) => {
           if (result.success) {
-            setOtherEvents(result.data as OtherEvent[]);
+            setUserAccount(result.data as UserAccount | null);
           }
         })
-        .finally(() => setLoadingOtherEvents(false));
+        .finally(() => setLoadingUserAccount(false));
+
+      // Fetch other events if user is linked
+      if (attendee.userId) {
+        setLoadingOtherEvents(true);
+        getAttendeeOtherEvents({ eventId, userId: attendee.userId })
+          .then((result) => {
+            if (result.success) {
+              setOtherEvents(result.data as OtherEvent[]);
+            }
+          })
+          .finally(() => setLoadingOtherEvents(false));
+      }
     }
     if (!open) {
-      setNewTempPassword(null);
+      setUserAccount(null);
       setOtherEvents([]);
+      setShowPassword(false);
     }
-  }, [open, attendee.userId, eventId]);
+  }, [open, attendee.id, attendee.userId, eventId]);
+
+  async function refreshUserAccount() {
+    setLoadingUserAccount(true);
+    const result = await getAttendeeUserAccount({
+      attendeeId: attendee.id,
+      eventId,
+    });
+    if (result.success) {
+      setUserAccount(result.data as UserAccount | null);
+    }
+    setLoadingUserAccount(false);
+  }
 
   async function handleResetPassword() {
     setResettingPassword(true);
@@ -94,24 +157,55 @@ export function AttendeeSheet({
     setResettingPassword(false);
 
     if (result.success) {
-      setNewTempPassword(result.data.temporaryPassword);
       toast.success("Password reset successfully");
+      setShowPassword(false);
+      await refreshUserAccount();
     } else {
       toast.error(result.error);
     }
   }
 
+  async function handleCreateAccount() {
+    setCreatingAccount(true);
+    const result = await createAttendeeAccount({
+      attendeeId: attendee.id,
+      eventId,
+    });
+    setCreatingAccount(false);
+
+    if (result.success) {
+      toast.success("User account created successfully");
+      await refreshUserAccount();
+    } else {
+      toast.error(result.error);
+    }
+  }
+
+  async function handleCopyEmail() {
+    const email = userAccount?.email ?? attendee.email;
+    await navigator.clipboard.writeText(email);
+    toast.success("Email copied to clipboard");
+  }
+
   async function handleCopyPassword() {
-    if (!newTempPassword) return;
-    await navigator.clipboard.writeText(newTempPassword);
+    if (!userAccount?.temporaryPassword) return;
+    await navigator.clipboard.writeText(userAccount.temporaryPassword);
     toast.success("Password copied to clipboard");
+  }
+
+  async function handleCopyAllCredentials() {
+    if (!userAccount?.temporaryPassword) return;
+    const email = userAccount.email ?? attendee.email;
+    const text = `Email: ${email}\nTemporary Password: ${userAccount.temporaryPassword}`;
+    await navigator.clipboard.writeText(text);
+    toast.success("Credentials copied to clipboard");
   }
 
   const fields = [
     { label: "Email", value: attendee.email },
     { label: "Company", value: attendee.company ?? "-" },
     { label: "Job Title", value: attendee.jobTitle ?? "-" },
-    { label: "Ticket Type", value: ticketTypeName },
+    ...(ticketTypeName ? [{ label: "Ticket Type", value: ticketTypeName }] : []),
     {
       label: "Payment Status",
       value: (
@@ -131,6 +225,142 @@ export function AttendeeSheet({
     },
     { label: "Registered", value: formatDate(attendee.createdAt) },
   ];
+
+  function renderLoginCredentials() {
+    if (loadingUserAccount) {
+      return (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          Loading account info...
+        </div>
+      );
+    }
+
+    // State C: No linked user account
+    if (!attendee.userId || !userAccount) {
+      return (
+        <div className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            No user account linked to this attendee.
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleCreateAccount}
+            disabled={creatingAccount}
+          >
+            {creatingAccount ? (
+              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <UserPlus className="mr-1.5 h-3.5 w-3.5" />
+            )}
+            Create Account
+          </Button>
+        </div>
+      );
+    }
+
+    // State A: Temp password (must change password AND has temp password)
+    if (userAccount.mustChangePassword && userAccount.temporaryPassword) {
+      return (
+        <div className="space-y-3">
+          <div>
+            <p className="text-xs text-muted-foreground">Email</p>
+            <div className="mt-0.5 flex items-center gap-2">
+              <p className="text-sm">{userAccount.email ?? attendee.email}</p>
+              <button
+                type="button"
+                onClick={handleCopyEmail}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <Copy className="h-3 w-3" />
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-xs text-muted-foreground">Temporary Password</p>
+            <div className="mt-0.5 flex items-center gap-2">
+              <p className="font-mono text-sm">
+                {showPassword
+                  ? userAccount.temporaryPassword
+                  : "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"}
+              </p>
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-3.5 w-3.5" />
+                ) : (
+                  <Eye className="h-3.5 w-3.5" />
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={handleCopyPassword}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <Copy className="h-3 w-3" />
+              </button>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
+            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" />
+            <p className="text-xs text-amber-800">
+              This attendee has not set their own password yet.
+            </p>
+          </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full"
+            onClick={handleCopyAllCredentials}
+          >
+            <Copy className="mr-1.5 h-3.5 w-3.5" />
+            Copy All Credentials
+          </Button>
+
+          <ResetPasswordButton
+            resetting={resettingPassword}
+            onConfirm={handleResetPassword}
+          />
+        </div>
+      );
+    }
+
+    // State B: Password set by attendee
+    return (
+      <div className="space-y-3">
+        <div>
+          <p className="text-xs text-muted-foreground">Email</p>
+          <p className="mt-0.5 text-sm">{userAccount.email ?? attendee.email}</p>
+        </div>
+
+        <div className="flex items-center gap-1.5 text-sm text-green-600">
+          <Check className="h-3.5 w-3.5" />
+          Password set by attendee
+        </div>
+
+        <div>
+          <p className="text-xs text-muted-foreground">Last login</p>
+          <p className="mt-0.5 text-sm">
+            {userAccount.lastSignInAt
+              ? formatDate(userAccount.lastSignInAt)
+              : "Never logged in"}
+          </p>
+        </div>
+
+        <ResetPasswordButton
+          resetting={resettingPassword}
+          onConfirm={handleResetPassword}
+        />
+      </div>
+    );
+  }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -153,54 +383,16 @@ export function AttendeeSheet({
           ))}
         </div>
 
+        <Separator />
+        <div className="space-y-4 p-4">
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Login Credentials
+          </p>
+          {renderLoginCredentials()}
+        </div>
+
         {attendee.userId && (
           <>
-            <Separator />
-            <div className="space-y-4 p-4">
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                User Account
-              </p>
-              <div>
-                <p className="text-xs text-muted-foreground">Account Email</p>
-                <p className="mt-0.5 text-sm">{attendee.email}</p>
-              </div>
-
-              {newTempPassword ? (
-                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
-                  <p className="text-xs font-semibold text-amber-800">
-                    New Temporary Password
-                  </p>
-                  <p className="mt-1 font-mono text-sm">{newTempPassword}</p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-2"
-                    onClick={handleCopyPassword}
-                  >
-                    <Copy className="mr-1.5 h-3 w-3" />
-                    Copy
-                  </Button>
-                  <p className="mt-1.5 text-xs text-amber-700">
-                    Save this password — it cannot be retrieved later.
-                  </p>
-                </div>
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleResetPassword}
-                  disabled={resettingPassword}
-                >
-                  {resettingPassword ? (
-                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <KeyRound className="mr-1.5 h-3.5 w-3.5" />
-                  )}
-                  Reset Password
-                </Button>
-              )}
-            </div>
-
             <Separator />
             <div className="space-y-3 p-4">
               <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -238,5 +430,44 @@ export function AttendeeSheet({
         )}
       </SheetContent>
     </Sheet>
+  );
+}
+
+function ResetPasswordButton({
+  resetting,
+  onConfirm,
+}: {
+  resetting: boolean;
+  onConfirm: () => void;
+}) {
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger
+        render={<Button variant="outline" size="sm" disabled={resetting} />}
+      >
+        {resetting ? (
+          <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+        ) : (
+          <KeyRound className="mr-1.5 h-3.5 w-3.5" />
+        )}
+        Reset Password
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Reset Password</AlertDialogTitle>
+          <AlertDialogDescription>
+            This will generate a new temporary password and invalidate the
+            current one. The attendee will need to use the new password to log
+            in. Continue?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm}>
+            Reset Password
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

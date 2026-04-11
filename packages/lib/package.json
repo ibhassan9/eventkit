@@ -72,16 +72,31 @@
       "types": "./src/default-website-pages.ts",
       "default": "./src/default-website-pages.ts"
     },
-    "./passwords": {
-      "types": "./src/passwords.ts",
-      "default": "./src/passwords.ts"
+    "./supabase/admin": {
+      "types": "./src/supabase/admin.ts",
+      "default": "./src/supabase/admin.ts"
+    },
+    "./supabase/server": {
+      "types": "./src/supabase/server.ts",
+      "default": "./src/supabase/server.ts"
+    },
+    "./supabase/client": {
+      "types": "./src/supabase/client.ts",
+      "default": "./src/supabase/client.ts"
+    },
+    "./supabase/middleware": {
+      "types": "./src/supabase/middleware.ts",
+      "default": "./src/supabase/middleware.ts"
     }
   },
   "dependencies": {
-    "@eventkit/types": "workspace:*",
-    "@eventkit/db": "workspace:*",
     "@anthropic-ai/sdk": "^0.87.0",
+    "drizzle-orm": "^0.45.2",
+    "@eventkit/db": "workspace:*",
+    "@eventkit/types": "workspace:*",
     "@react-pdf/renderer": "^4.4.0",
+    "@supabase/ssr": "^0.10.2",
+    "@supabase/supabase-js": "^2.103.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "qrcode": "^1.5.4",
@@ -99,6 +114,7 @@
     "typescript": "^5"
   },
   "peerDependencies": {
+    "next": ">=14",
     "react": "^19"
   }
 }

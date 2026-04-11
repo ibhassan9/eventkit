@@ -7,18 +7,18 @@ import { adminAddAttendeeSchema } from "@eventkit/lib/validators";
 import {
   getEventById,
   getAttendeeByEmail,
-  createAttendeeWithUser,
   getAttendeeById,
-  updateUserPassword,
   getAttendeesByUserId,
+  createAttendee,
+  updateAttendee,
 } from "@eventkit/db/queries";
 import {
-  generateTemporaryPassword,
-  hashPassword,
-} from "@eventkit/lib/passwords";
+  createAdminClient,
+  getAuthUserIdByEmail,
+} from "@eventkit/lib/supabase/admin";
+import { generateTemporaryPassword, formatDate } from "@eventkit/lib/utils";
 import { sendEmail } from "@eventkit/lib/resend";
 import { WelcomeAttendeeEmail } from "@eventkit/emails/welcome-attendee";
-import { formatDate } from "@eventkit/lib/utils";
 import crypto from "node:crypto";
 
 export const addAttendee = createSafeAction(
@@ -36,13 +36,39 @@ export const addAttendee = createSafeAction(
       );
     }
 
-    const temporaryPassword = generateTemporaryPassword();
-    const passwordHash = await hashPassword(temporaryPassword);
+    const supabase = createAdminClient();
+    let userId: string;
+    let isNewUser = false;
+    let temporaryPassword: string | undefined;
+
+    const existingAuthUserId = await getAuthUserIdByEmail(input.email);
+
+    if (!existingAuthUserId) {
+      isNewUser = true;
+      temporaryPassword = generateTemporaryPassword();
+
+      const { data: newUser, error } = await supabase.auth.admin.createUser({
+        email: input.email,
+        password: temporaryPassword,
+        email_confirm: true,
+        user_metadata: {
+          first_name: input.firstName,
+          last_name: input.lastName,
+          must_change_password: true,
+          temporary_password: temporaryPassword,
+        },
+      });
+      if (error) throw new Error(`Failed to create user: ${error.message}`);
+      userId = newUser.user.id;
+    } else {
+      userId = existingAuthUserId;
+    }
+
     const qrCode = crypto.randomUUID();
 
-    const result = await createAttendeeWithUser({
+    const attendee = await createAttendee({
       eventId: input.eventId,
-      ticketTypeId: input.ticketTypeId,
+      ...(input.ticketTypeId && { ticketTypeId: input.ticketTypeId }),
       firstName: input.firstName,
       lastName: input.lastName,
       email: input.email,
@@ -51,11 +77,10 @@ export const addAttendee = createSafeAction(
       customFieldValues: input.customFieldValues,
       paymentStatus: input.paymentStatus ?? "free",
       qrCode,
-      passwordHash,
-      temporaryPassword,
+      userId,
     });
 
-    if (input.sendWelcomeEmail && result.isNewUser) {
+    if (input.sendWelcomeEmail && isNewUser) {
       const ticketType = event.ticketTypes.find(
         (tt) => tt.id === input.ticketTypeId
       );
@@ -70,7 +95,7 @@ export const addAttendee = createSafeAction(
           venue: event.venue ?? undefined,
           ticketType: ticketType?.name ?? "General",
           email: input.email,
-          tempPassword: temporaryPassword,
+          tempPassword: temporaryPassword!,
           eventSlug: event.slug,
         }),
       });
@@ -79,10 +104,9 @@ export const addAttendee = createSafeAction(
     revalidatePath(`/events/${input.eventId}/attendees`);
 
     return {
-      attendee: result.attendee,
-      user: result.user,
-      isNewUser: result.isNewUser,
-      temporaryPassword: result.isNewUser ? temporaryPassword : undefined,
+      attendee,
+      isNewUser,
+      temporaryPassword: isNewUser ? temporaryPassword : undefined,
     };
   }
 );
@@ -109,15 +133,91 @@ export const resetAttendeePassword = createSafeAction(
       throw new Error("This attendee does not have a user account");
     }
 
+    const supabase = createAdminClient();
     const temporaryPassword = generateTemporaryPassword();
-    const passwordHash = await hashPassword(temporaryPassword);
 
-    await updateUserPassword(attendee.userId, {
-      passwordHash,
-      mustChangePassword: true,
-      temporaryPassword,
+    const { error } = await supabase.auth.admin.updateUserById(
+      attendee.userId,
+      {
+        password: temporaryPassword,
+        user_metadata: {
+          must_change_password: true,
+          temporary_password: temporaryPassword,
+        },
+      }
+    );
+    if (error) throw new Error(`Failed to reset password: ${error.message}`);
+
+    return { temporaryPassword };
+  }
+);
+
+const getAttendeeUserAccountSchema = z.object({
+  attendeeId: z.string().uuid(),
+  eventId: z.string().uuid(),
+});
+
+export const getAttendeeUserAccount = createSafeAction(
+  getAttendeeUserAccountSchema,
+  async (input, ctx) => {
+    const event = await getEventById(input.eventId);
+    if (!event || event.organizationId !== ctx.organizationId) {
+      throw new Error("Event not found");
+    }
+    const attendee = await getAttendeeById(input.attendeeId);
+    if (!attendee?.userId) return null;
+
+    const supabase = createAdminClient();
+    const { data, error } = await supabase.auth.admin.getUserById(
+      attendee.userId
+    );
+    if (error || !data?.user) return null;
+
+    const meta = data.user.user_metadata;
+    return {
+      id: data.user.id,
+      email: data.user.email,
+      createdAt: data.user.created_at,
+      lastSignInAt: data.user.last_sign_in_at,
+      mustChangePassword: meta?.must_change_password ?? false,
+      temporaryPassword: meta?.temporary_password ?? null,
+    };
+  }
+);
+
+const createAttendeeAccountSchema = z.object({
+  attendeeId: z.string().uuid(),
+  eventId: z.string().uuid(),
+});
+
+export const createAttendeeAccount = createSafeAction(
+  createAttendeeAccountSchema,
+  async (input, ctx) => {
+    const event = await getEventById(input.eventId);
+    if (!event || event.organizationId !== ctx.organizationId) {
+      throw new Error("Event not found");
+    }
+    const attendee = await getAttendeeById(input.attendeeId);
+    if (!attendee) throw new Error("Attendee not found");
+    if (attendee.userId) throw new Error("Attendee already has a user account");
+
+    const supabase = createAdminClient();
+    const temporaryPassword = generateTemporaryPassword();
+
+    const { data: newUser, error } = await supabase.auth.admin.createUser({
+      email: attendee.email,
+      password: temporaryPassword,
+      email_confirm: true,
+      user_metadata: {
+        first_name: attendee.firstName,
+        last_name: attendee.lastName,
+        must_change_password: true,
+        temporary_password: temporaryPassword,
+      },
     });
+    if (error) throw new Error(`Failed to create user: ${error.message}`);
 
+    await updateAttendee(attendee.id, { userId: newUser.user.id });
     return { temporaryPassword };
   }
 );

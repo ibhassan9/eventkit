@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { CheckCircle, Copy, Loader2 } from "lucide-react";
+import { CheckCircle, Copy, Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@eventkit/ui/button";
 import { Input } from "@eventkit/ui/input";
 import { Label } from "@eventkit/ui/label";
@@ -51,7 +51,7 @@ interface AddAttendeeSheetProps {
 interface SuccessData {
   attendeeName: string;
   email: string;
-  ticketTypeName: string;
+  ticketTypeName?: string;
   isNewUser: boolean;
   temporaryPassword?: string;
 }
@@ -66,6 +66,7 @@ export function AddAttendeeSheet({
   const [view, setView] = useState<"form" | "success">("form");
   const [successData, setSuccessData] = useState<SuccessData | null>(null);
   const [copied, setCopied] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const queryClient = useQueryClient();
 
   const {
@@ -83,7 +84,7 @@ export function AddAttendeeSheet({
       email: "",
       company: "",
       jobTitle: "",
-      ticketTypeId: "",
+      ticketTypeId: undefined,
       paymentStatus: "free",
       customFieldValues: {},
       sendWelcomeEmail: true,
@@ -95,6 +96,7 @@ export function AddAttendeeSheet({
       setView("form");
       setSuccessData(null);
       setCopied(false);
+      setShowPassword(false);
       reset({
         eventId,
         firstName: "",
@@ -102,7 +104,7 @@ export function AddAttendeeSheet({
         email: "",
         company: "",
         jobTitle: "",
-        ticketTypeId: "",
+        ticketTypeId: undefined,
         paymentStatus: "free",
         customFieldValues: {},
         sendWelcomeEmail: true,
@@ -119,12 +121,14 @@ export function AddAttendeeSheet({
       return;
     }
 
-    const ticketType = ticketTypes.find((tt) => tt.id === data.ticketTypeId);
+    const ticketType = data.ticketTypeId
+      ? ticketTypes.find((tt) => tt.id === data.ticketTypeId)
+      : undefined;
 
     setSuccessData({
       attendeeName: `${data.firstName} ${data.lastName}`,
       email: data.email,
-      ticketTypeName: ticketType?.name ?? "Unknown",
+      ticketTypeName: ticketType?.name,
       isNewUser: result.data.isNewUser,
       temporaryPassword: result.data.temporaryPassword,
     });
@@ -138,6 +142,7 @@ export function AddAttendeeSheet({
     setView("form");
     setSuccessData(null);
     setCopied(false);
+    setShowPassword(false);
     reset({
       eventId,
       firstName: "",
@@ -145,7 +150,7 @@ export function AddAttendeeSheet({
       email: "",
       company: "",
       jobTitle: "",
-      ticketTypeId: "",
+      ticketTypeId: undefined,
       paymentStatus: "free",
       customFieldValues: {},
       sendWelcomeEmail: true,
@@ -240,36 +245,33 @@ export function AddAttendeeSheet({
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <Label>Ticket Type *</Label>
-                <Controller
-                  name="ticketTypeId"
-                  control={control}
-                  render={({ field }) => (
-                    <Select
-                      value={field.value}
-                      onValueChange={field.onChange}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select ticket type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {ticketTypes.map((tt) => (
-                          <SelectItem key={tt.id} value={tt.id}>
-                            {tt.name}
-                            {tt.price > 0 ? ` ($${(tt.price / 100).toFixed(2)})` : " (Free)"}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                {errors.ticketTypeId && (
-                  <p className="text-xs text-destructive">
-                    {errors.ticketTypeId.message}
-                  </p>
-                )}
-              </div>
+              {ticketTypes.length > 0 && (
+                <div className="space-y-1.5">
+                  <Label>Ticket Type</Label>
+                  <Controller
+                    name="ticketTypeId"
+                    control={control}
+                    render={({ field }) => (
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select ticket type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ticketTypes.map((tt) => (
+                            <SelectItem key={tt.id} value={tt.id}>
+                              {tt.name}
+                              {tt.price > 0 ? ` ($${(tt.price / 100).toFixed(2)})` : " (Free)"}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </div>
+              )}
 
               <div className="space-y-1.5">
                 <Label>Payment Status</Label>
@@ -372,14 +374,16 @@ export function AddAttendeeSheet({
                   </p>
                   <p className="mt-1 text-sm">{successData?.email}</p>
                 </div>
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Ticket Type
-                  </p>
-                  <p className="mt-1 text-sm">
-                    {successData?.ticketTypeName}
-                  </p>
-                </div>
+                {successData?.ticketTypeName && (
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                      Ticket Type
+                    </p>
+                    <p className="mt-1 text-sm">
+                      {successData.ticketTypeName}
+                    </p>
+                  </div>
+                )}
               </div>
 
               {successData?.isNewUser && successData.temporaryPassword ? (
@@ -398,9 +402,37 @@ export function AddAttendeeSheet({
                       <p className="text-xs text-amber-700">
                         Temporary Password
                       </p>
-                      <p className="font-mono text-sm">
-                        {successData.temporaryPassword}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-mono text-sm">
+                          {showPassword
+                            ? successData.temporaryPassword
+                            : "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="text-amber-600 hover:text-amber-800"
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-3.5 w-3.5" />
+                          ) : (
+                            <Eye className="h-3.5 w-3.5" />
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            if (!successData.temporaryPassword) return;
+                            await navigator.clipboard.writeText(
+                              successData.temporaryPassword
+                            );
+                            toast.success("Password copied to clipboard");
+                          }}
+                          className="text-amber-600 hover:text-amber-800"
+                        >
+                          <Copy className="h-3 w-3" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                   <Button

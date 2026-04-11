@@ -70,3 +70,19 @@ export function formatDateRange(
 
   return `${formatDate(s, tz)} - ${formatDate(e, tz)}`;
 }
+
+const TEMP_PASSWORD_WORDS = [
+  "maple",  "river",  "ocean",  "spark",  "cedar",  "frost",  "coral",
+  "blaze",  "drift",  "grove",  "lunar",  "pearl",  "stone",  "swift",
+  "ember",  "haven",  "ridge",  "delta",  "flint",  "aspen",  "birch",
+  "cloud",  "dune",   "fern",   "gale",   "iris",   "jade",   "lark",
+  "mint",   "nest",   "opal",   "pine",   "quay",   "reed",   "sage",
+  "tide",   "vale",   "wren",   "amber",  "brook",  "crest",  "dusk",
+];
+
+export function generateTemporaryPassword(): string {
+  const w1 = TEMP_PASSWORD_WORDS[Math.floor(Math.random() * TEMP_PASSWORD_WORDS.length)];
+  const w2 = TEMP_PASSWORD_WORDS[Math.floor(Math.random() * TEMP_PASSWORD_WORDS.length)];
+  const num = Math.floor(Math.random() * 90) + 10;
+  return `${w1}-${w2}-${num}`;
+}

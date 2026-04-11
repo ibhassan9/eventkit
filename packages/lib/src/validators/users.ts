@@ -21,7 +21,7 @@ export const adminAddAttendeeSchema = z.object({
   email: z.string().email("Invalid email address"),
   company: z.string().max(200).optional(),
   jobTitle: z.string().max(200).optional(),
-  ticketTypeId: z.string().uuid("Ticket type is required"),
+  ticketTypeId: z.string().uuid().optional(),
   paymentStatus: z.enum(["free", "paid"]).optional(),
   customFieldValues: z.record(z.string(), z.string()).optional(),
   sendWelcomeEmail: z.boolean().optional(),

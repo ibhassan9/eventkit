@@ -8,18 +8,17 @@ import {
   getAttendeeByEmail,
   getOrganizationById,
   createAttendee,
-  findUserByEmail,
-  createUser,
   updateAttendee,
 } from "@eventkit/db/queries";
 import { generateQRCode } from "@eventkit/lib/qr";
 import { sendEmail } from "@eventkit/lib/resend";
 import { createCheckoutSession } from "@eventkit/lib/stripe";
 import { checkRateLimit } from "@eventkit/lib/rate-limit";
-import { generateTemporaryPassword, hashPassword } from "@eventkit/lib/passwords";
+import { generateTemporaryPassword } from "@eventkit/lib/utils";
 import { ConfirmationEmail } from "@eventkit/emails/confirmation";
 import { WelcomeAttendeeEmail } from "@eventkit/emails/welcome-attendee";
-import { createAttendeeSession } from "@/lib/attendee-auth";
+import { createAdminClient, getAuthUserIdByEmail } from "@eventkit/lib/supabase/admin";
+import { createServerSupabaseClient } from "@eventkit/lib/supabase/server";
 import { checkCapacity } from "./check-capacity";
 
 export const registerFree = createPublicAction(
@@ -55,19 +54,33 @@ export const registerFree = createPublicAction(
       qrCode,
     });
 
-    // Create or find user account and link to attendee
-    let existingUser = await findUserByEmail(input.email);
-    if (!existingUser) {
-      const tempPassword = generateTemporaryPassword();
-      const passwordHash = await hashPassword(tempPassword);
-      existingUser = await createUser({
+    // Create or find Supabase Auth user and link to attendee
+    const adminSupabase = createAdminClient();
+    const existingUserId = await getAuthUserIdByEmail(input.email);
+
+    let userId: string;
+    let isNewUser = false;
+    let tempPassword: string | null = null;
+
+    if (existingUserId) {
+      userId = existingUserId;
+    } else {
+      tempPassword = generateTemporaryPassword();
+      const { data: newUser, error: createError } = await adminSupabase.auth.admin.createUser({
         email: input.email,
-        passwordHash,
-        firstName: input.firstName,
-        lastName: input.lastName,
-        temporaryPassword: tempPassword,
-        mustChangePassword: true,
+        password: tempPassword,
+        email_confirm: true,
+        user_metadata: {
+          first_name: input.firstName,
+          last_name: input.lastName,
+          must_change_password: true,
+          temporary_password: tempPassword,
+        },
       });
+      if (createError) throw new Error(`Failed to create user: ${createError.message}`);
+      userId = newUser.user.id;
+      isNewUser = true;
+
       // Send welcome email with credentials (only for new users)
       try {
         await sendEmail({
@@ -88,10 +101,18 @@ export const registerFree = createPublicAction(
         // Email failure should not block registration
       }
     }
+
     // Link attendee to user
-    await updateAttendee(attendee.id, { userId: existingUser.id });
-    // Auto-login the user
-    await createAttendeeSession(existingUser.id);
+    await updateAttendee(attendee.id, { userId });
+
+    // Auto-login new users (we know the temp password)
+    if (isNewUser && tempPassword) {
+      const serverSupabase = await createServerSupabaseClient();
+      await serverSupabase.auth.signInWithPassword({
+        email: input.email,
+        password: tempPassword,
+      });
+    }
 
     try {
       const qrDataUrl = await generateQRCode(qrCode);
@@ -154,19 +175,33 @@ export const createCheckout = createPublicAction(
       qrCode,
     });
 
-    // Create or find user account and link to attendee
-    let existingUser = await findUserByEmail(input.email);
-    if (!existingUser) {
-      const tempPassword = generateTemporaryPassword();
-      const passwordHash = await hashPassword(tempPassword);
-      existingUser = await createUser({
+    // Create or find Supabase Auth user and link to attendee
+    const adminSupabase = createAdminClient();
+    const existingUserId = await getAuthUserIdByEmail(input.email);
+
+    let userId: string;
+    let isNewUser = false;
+    let tempPassword: string | null = null;
+
+    if (existingUserId) {
+      userId = existingUserId;
+    } else {
+      tempPassword = generateTemporaryPassword();
+      const { data: newUser, error: createError } = await adminSupabase.auth.admin.createUser({
         email: input.email,
-        passwordHash,
-        firstName: input.firstName,
-        lastName: input.lastName,
-        temporaryPassword: tempPassword,
-        mustChangePassword: true,
+        password: tempPassword,
+        email_confirm: true,
+        user_metadata: {
+          first_name: input.firstName,
+          last_name: input.lastName,
+          must_change_password: true,
+          temporary_password: tempPassword,
+        },
       });
+      if (createError) throw new Error(`Failed to create user: ${createError.message}`);
+      userId = newUser.user.id;
+      isNewUser = true;
+
       // Send welcome email with credentials (only for new users)
       try {
         await sendEmail({
@@ -187,10 +222,18 @@ export const createCheckout = createPublicAction(
         // Email failure should not block registration
       }
     }
+
     // Link attendee to user
-    await updateAttendee(attendee.id, { userId: existingUser.id });
-    // Auto-login the user
-    await createAttendeeSession(existingUser.id);
+    await updateAttendee(attendee.id, { userId });
+
+    // Auto-login new users (we know the temp password)
+    if (isNewUser && tempPassword) {
+      const serverSupabase = await createServerSupabaseClient();
+      await serverSupabase.auth.signInWithPassword({
+        email: input.email,
+        password: tempPassword,
+      });
+    }
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     const session = await createCheckoutSession({

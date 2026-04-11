@@ -2,15 +2,12 @@
 
 import { z } from "zod";
 import { createPublicAction } from "@eventkit/lib/safe-action";
-import { attendeeLoginSchema, changePasswordSchema } from "@eventkit/lib/validators";
-import { findUserByEmail, updateUserPassword, updateUserLastLogin } from "@eventkit/db/queries";
-import { verifyPassword, hashPassword } from "@eventkit/lib/passwords";
-import { checkRateLimit } from "@eventkit/lib/rate-limit";
 import {
-  createAttendeeSession,
-  getAttendeeUser,
-  destroyAttendeeSession,
-} from "@/lib/attendee-auth";
+  attendeeLoginSchema,
+  changePasswordSchema,
+} from "@eventkit/lib/validators";
+import { createServerSupabaseClient } from "@eventkit/lib/supabase/server";
+import { checkRateLimit } from "@eventkit/lib/rate-limit";
 
 export const loginAction = createPublicAction(
   attendeeLoginSchema,
@@ -20,46 +17,53 @@ export const loginAction = createPublicAction(
       throw new Error("Too many attempts. Try again later.");
     }
 
-    const user = await findUserByEmail(input.email);
-    if (!user) {
+    const supabase = await createServerSupabaseClient();
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: input.email,
+      password: input.password,
+    });
+
+    if (error) {
       throw new Error("Invalid email or password");
     }
 
-    const valid = await verifyPassword(input.password, user.passwordHash);
-    if (!valid) {
-      throw new Error("Invalid email or password");
-    }
-
-    await createAttendeeSession(user.id);
-    await updateUserLastLogin(user.id);
-
-    return { userId: user.id, mustChangePassword: user.mustChangePassword };
+    return {
+      userId: data.user.id,
+      mustChangePassword:
+        data.user.user_metadata?.must_change_password === true,
+    };
   }
 );
 
 export const changePasswordAction = createPublicAction(
   changePasswordSchema,
   async (input) => {
-    const user = await getAttendeeUser();
+    const supabase = await createServerSupabaseClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       throw new Error("You must be logged in to change your password");
     }
 
-    const passwordHash = await hashPassword(input.newPassword);
-    await updateUserPassword(user.id, {
-      passwordHash,
-      mustChangePassword: false,
-      temporaryPassword: null,
+    const { error } = await supabase.auth.updateUser({
+      password: input.newPassword,
+      data: {
+        must_change_password: false,
+        temporary_password: null,
+      },
     });
+
+    if (error) {
+      throw new Error(error.message);
+    }
 
     return { success: true };
   }
 );
 
-export const logoutAction = createPublicAction(
-  z.object({}),
-  async () => {
-    await destroyAttendeeSession();
-    return {};
-  }
-);
+export const logoutAction = createPublicAction(z.object({}), async () => {
+  const supabase = await createServerSupabaseClient();
+  await supabase.auth.signOut();
+  return {};
+});
