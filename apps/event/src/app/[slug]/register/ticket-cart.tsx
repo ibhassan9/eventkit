@@ -24,6 +24,7 @@ interface TicketCartProps {
   onCartChange: (ticketTypeId: string, quantity: number) => void;
   currency: string;
   primaryColor: string;
+  onJoinWaitlist?: (ticketTypeId: string, ticketTypeName: string) => void;
 }
 
 function getTicketAvailability(ticket: TicketType) {
@@ -49,6 +50,7 @@ export function TicketCart({
   onCartChange,
   currency,
   primaryColor,
+  onJoinWaitlist,
 }: TicketCartProps) {
   const visibleTickets = ticketTypes.filter((t) => {
     if (!t.isVisible) return false;
@@ -114,9 +116,15 @@ export function TicketCart({
               <div className="mt-3 flex items-center justify-end">
                 {!available ? (
                   reason === "waitlist" ? (
-                    <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onJoinWaitlist?.(ticket.id, ticket.name)
+                      }
+                      className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700 hover:bg-amber-200 transition-colors"
+                    >
                       Join Waitlist
-                    </span>
+                    </button>
                   ) : reason === "sold_out" ? (
                     <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-700">
                       Sold Out

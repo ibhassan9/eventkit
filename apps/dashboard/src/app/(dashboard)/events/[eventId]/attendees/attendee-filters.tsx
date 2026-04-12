@@ -15,6 +15,7 @@ interface AttendeeFiltersProps {
     status: string;
     ticketType: string;
     checkedIn: string;
+    showCancelled: string;
   };
   onFilterChange: (updates: Record<string, string>) => void;
 }
@@ -36,7 +37,7 @@ export function AttendeeFilters({
   filters,
   onFilterChange,
 }: AttendeeFiltersProps) {
-  const hasFilters = filters.status || filters.ticketType || filters.checkedIn;
+  const hasFilters = filters.status || filters.ticketType || filters.checkedIn || filters.showCancelled;
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -87,12 +88,29 @@ export function AttendeeFilters({
         </Button>
       ))}
 
+      <Button
+        variant={filters.showCancelled === "true" ? "default" : "outline"}
+        size="xs"
+        onClick={() =>
+          onFilterChange({
+            showCancelled: filters.showCancelled === "true" ? "" : "true",
+          })
+        }
+      >
+        Show Cancelled
+      </Button>
+
       {hasFilters && (
         <Button
           variant="ghost"
           size="xs"
           onClick={() =>
-            onFilterChange({ status: "", ticketType: "", checkedIn: "" })
+            onFilterChange({
+              status: "",
+              ticketType: "",
+              checkedIn: "",
+              showCancelled: "",
+            })
           }
         >
           <X className="mr-1 h-3 w-3" />

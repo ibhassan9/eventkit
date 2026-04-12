@@ -149,6 +149,15 @@ export async function getEventOrderStats(eventId: string) {
   return result[0] ?? { totalOrders: 0, totalRevenue: 0, totalRefunded: 0, paidOrders: 0 };
 }
 
+export async function getOrdersByAttendeeId(attendeeId: string) {
+  return db.query.orders.findMany({
+    where: eq(orders.attendeeId, attendeeId),
+    with: {
+      items: { with: { ticketType: true } },
+    },
+  });
+}
+
 export async function decrementTicketSoldCount(
   ticketTypeId: string,
   quantity: number

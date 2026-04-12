@@ -1,0 +1,30 @@
+import { Skeleton } from "@eventkit/ui/skeleton";
+
+export default function WaitlistLoading() {
+  return (
+    <div className="space-y-6 p-6">
+      <div>
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="mt-2 h-4 w-64" />
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {[1, 2, 3, 4].map((i) => (
+          <div
+            key={i}
+            className="rounded-xl border border-stone-200 bg-white p-5"
+          >
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="mt-3 h-8 w-20" />
+          </div>
+        ))}
+      </div>
+      <div className="rounded-xl border bg-card p-6">
+        <div className="space-y-3">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <Skeleton key={i} className="h-10 w-full" />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}

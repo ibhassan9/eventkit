@@ -1,6 +1,7 @@
 "use client";
 
 import { Badge } from "@eventkit/ui/badge";
+import { Checkbox } from "@eventkit/ui/checkbox";
 import { formatDate } from "@eventkit/lib/utils";
 
 interface OrderItem {
@@ -26,6 +27,7 @@ interface Attendee {
   company: string | null;
   paymentStatus: "pending" | "paid" | "free" | "refunded";
   checkedInAt: Date | null;
+  cancelledAt: Date | null;
   createdAt: Date;
   ticketTypeId: string | null;
   orders?: Order[];
@@ -35,6 +37,8 @@ interface AttendeesTableRowsProps {
   attendees: Attendee[];
   ticketTypeMap: Record<string, string>;
   onSelectAttendee: (id: string) => void;
+  selectedIds: Set<string>;
+  onToggleSelection: (id: string) => void;
 }
 
 const paymentStyles: Record<string, string> = {
@@ -79,12 +83,14 @@ export function AttendeesTableRows({
   attendees,
   ticketTypeMap,
   onSelectAttendee,
+  selectedIds,
+  onToggleSelection,
 }: AttendeesTableRowsProps) {
   if (attendees.length === 0) {
     return (
       <tbody>
         <tr>
-          <td colSpan={7} className="p-8 text-center text-muted-foreground">
+          <td colSpan={8} className="p-8 text-center text-muted-foreground">
             No attendees found. Adjust your filters or share your registration
             link.
           </td>
@@ -100,11 +106,24 @@ export function AttendeesTableRows({
         return (
           <tr
             key={a.id}
-            className="border-b transition-colors hover:bg-stone-50 cursor-pointer"
+            className={`border-b transition-colors hover:bg-stone-50 cursor-pointer ${a.cancelledAt ? "opacity-50" : ""}`}
             onClick={() => onSelectAttendee(a.id)}
           >
+            <td className="px-3 py-2.5" onClick={(e) => e.stopPropagation()}>
+              <Checkbox
+                checked={selectedIds.has(a.id)}
+                onCheckedChange={() => onToggleSelection(a.id)}
+              />
+            </td>
             <td className="p-3 font-medium whitespace-nowrap">
-              {a.firstName} {a.lastName}
+              <span className="flex items-center gap-2">
+                {a.firstName} {a.lastName}
+                {a.cancelledAt && (
+                  <Badge variant="secondary" className="bg-red-50 text-red-700 text-xs">
+                    Cancelled
+                  </Badge>
+                )}
+              </span>
             </td>
             <td className="p-3 text-muted-foreground whitespace-nowrap">
               {a.email}

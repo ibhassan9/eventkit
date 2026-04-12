@@ -9,11 +9,16 @@ export async function getAttendeesByEventId(
     paymentStatus?: string;
     ticketTypeId?: string;
     checkedIn?: boolean;
+    showCancelled?: boolean;
     limit?: number;
     offset?: number;
   }
 ) {
   const conditions = [eq(attendees.eventId, eventId)];
+
+  if (!options?.showCancelled) {
+    conditions.push(sql`${attendees.cancelledAt} IS NULL`);
+  }
 
   if (options?.search) {
     const term = `%${options.search}%`;
@@ -118,6 +123,21 @@ export async function getAttendeesByUserId(userId: string) {
   });
 }
 
+export async function getAllAttendeesByEventId(eventId: string) {
+  return db.query.attendees.findMany({
+    where: and(eq(attendees.eventId, eventId), sql`${attendees.cancelledAt} IS NULL`),
+    with: {
+      ticketType: true,
+      orders: {
+        with: {
+          items: { with: { ticketType: true } },
+        },
+      },
+    },
+    orderBy: desc(attendees.createdAt),
+  });
+}
+
 export async function updateAttendee(
   id: string,
   data: Partial<{
@@ -129,6 +149,7 @@ export async function updateAttendee(
     checkedInBy: string | null;
     badgePrintedAt: Date;
     confirmationEmailSentAt: Date;
+    cancelledAt: Date | null;
     userId: string;
   }>
 ) {

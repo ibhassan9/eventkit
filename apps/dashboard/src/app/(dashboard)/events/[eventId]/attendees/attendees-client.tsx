@@ -19,6 +19,7 @@ export function AttendeesClient({ eventId }: AttendeesClientProps) {
     status: searchParams.get("status") ?? "",
     ticketType: searchParams.get("ticketType") ?? "",
     checkedIn: searchParams.get("checkedIn") ?? "",
+    showCancelled: searchParams.get("showCancelled") ?? "",
   };
 
   const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
@@ -32,6 +33,7 @@ export function AttendeesClient({ eventId }: AttendeesClientProps) {
     status: filters.status || undefined,
     ticketType: filters.ticketType || undefined,
     checkedIn: filters.checkedIn || undefined,
+    showCancelled: filters.showCancelled || undefined,
     page,
   });
 

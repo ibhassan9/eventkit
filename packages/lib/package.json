@@ -95,6 +95,10 @@
     "./supabase/middleware": {
       "types": "./src/supabase/middleware.ts",
       "default": "./src/supabase/middleware.ts"
+    },
+    "./waitlist-token": {
+      "types": "./src/waitlist-token.ts",
+      "default": "./src/waitlist-token.ts"
     }
   },
   "dependencies": {

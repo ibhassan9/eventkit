@@ -45,6 +45,7 @@ export const attendees = pgTable(
     badgePrintedAt: timestamp({ withTimezone: true }),
     qrCode: text().notNull().unique(),
     confirmationEmailSentAt: timestamp({ withTimezone: true }),
+    cancelledAt: timestamp({ withTimezone: true }),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },

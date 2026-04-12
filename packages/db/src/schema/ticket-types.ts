@@ -11,6 +11,7 @@ import { relations } from "drizzle-orm";
 import { events } from "./events";
 import { attendees } from "./attendees";
 import { orderItems } from "./orders";
+import { waitlistEntries } from "./waitlist-entries";
 
 export const ticketTypes = pgTable(
   "ticket_types",
@@ -47,4 +48,5 @@ export const ticketTypesRelations = relations(ticketTypes, ({ one, many }) => ({
   }),
   attendees: many(attendees),
   orderItems: many(orderItems),
+  waitlistEntries: many(waitlistEntries),
 }));

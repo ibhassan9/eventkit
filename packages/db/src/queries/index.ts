@@ -8,3 +8,4 @@ export * from "./sessions";
 export * from "./speakers";
 export * from "./session-speakers";
 export * from "./orders";
+export * from "./waitlist-entries";

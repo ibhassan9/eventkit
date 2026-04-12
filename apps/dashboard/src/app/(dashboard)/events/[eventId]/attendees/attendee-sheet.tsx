@@ -33,6 +33,7 @@ import {
   Loader2,
   UserPlus,
   ExternalLink,
+  Ban,
 } from "lucide-react";
 import { formatDate, formatCurrency } from "@eventkit/lib/utils";
 import {
@@ -41,6 +42,7 @@ import {
   getAttendeeUserAccount,
   createAttendeeAccount,
 } from "./actions";
+import { CancelAttendeeDialog } from "./cancel-attendee-dialog";
 
 interface OrderItem {
   ticketTypeId: string;
@@ -71,6 +73,8 @@ interface Attendee {
   jobTitle: string | null;
   paymentStatus: "pending" | "paid" | "free" | "refunded";
   checkedInAt: Date | null;
+  cancelledAt: Date | null;
+  amountPaid: number | null;
   createdAt: Date;
   userId?: string | null;
   orders?: Order[];
@@ -127,6 +131,7 @@ export function AttendeeSheet({
   const [loadingUserAccount, setLoadingUserAccount] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [creatingAccount, setCreatingAccount] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -529,6 +534,39 @@ export function AttendeeSheet({
                   ))}
                 </div>
               )}
+            </div>
+          </>
+        )}
+
+        {!attendee.cancelledAt && (
+          <>
+            <Separator />
+            <div className="space-y-3 p-4">
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Actions
+              </p>
+              <CancelAttendeeDialog
+                open={cancelDialogOpen}
+                onOpenChange={setCancelDialogOpen}
+                attendeeId={attendee.id}
+                attendeeName={`${attendee.firstName} ${attendee.lastName}`}
+                eventId={eventId}
+                paymentStatus={attendee.paymentStatus}
+                amountPaid={attendee.amountPaid ?? 0}
+                currency="CAD"
+                onSuccess={() => {
+                  onOpenChange(false);
+                }}
+              />
+              <Button
+                variant="destructive"
+                size="sm"
+                className="w-full"
+                onClick={() => setCancelDialogOpen(true)}
+              >
+                <Ban className="mr-1.5 h-3.5 w-3.5" />
+                Cancel Registration
+              </Button>
             </div>
           </>
         )}

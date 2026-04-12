@@ -3,8 +3,10 @@ interface Attendee {
   lastName: string;
   email: string;
   company: string | null;
+  jobTitle?: string | null;
   paymentStatus: string;
   checkedInAt: Date | null;
+  cancelledAt?: Date | null;
   createdAt: Date;
   ticketTypeId: string | null;
 }
@@ -19,10 +21,12 @@ export function exportAttendeesToCsv(
     "Last Name",
     "Email",
     "Company",
+    "Job Title",
     "Ticket",
     "Payment",
     "Checked In",
-    "Date",
+    "Check-in Time",
+    "Registered",
   ];
 
   const rows = attendees.map((a) => [
@@ -30,14 +34,16 @@ export function exportAttendeesToCsv(
     a.lastName,
     a.email,
     a.company ?? "",
+    a.jobTitle ?? "",
     (a.ticketTypeId ? ticketTypeMap[a.ticketTypeId] : "") ?? "",
     a.paymentStatus,
     a.checkedInAt ? "Yes" : "No",
+    a.checkedInAt ? new Date(a.checkedInAt).toISOString() : "",
     new Date(a.createdAt).toISOString(),
   ]);
 
   const csv = [headers, ...rows]
-    .map((r) => r.map((c) => `"${c}"`).join(","))
+    .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
     .join("\n");
 
   const blob = new Blob([csv], { type: "text/csv" });

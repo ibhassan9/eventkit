@@ -14,6 +14,7 @@ const attendeesFilterSchema = z.object({
   status: z.string().optional(),
   ticketType: z.string().optional(),
   checkedIn: z.enum(["true", "false", ""]).optional(),
+  showCancelled: z.enum(["true", ""]).optional(),
   page: z.number().optional(),
   pageSize: z.number().optional(),
 });
@@ -42,6 +43,7 @@ export const fetchAttendees = createSafeQueryWithInput(
       paymentStatus: input.status || undefined,
       ticketTypeId: input.ticketType || undefined,
       checkedIn,
+      showCancelled: input.showCancelled === "true",
       limit: pageSize + 1,
       offset,
     });

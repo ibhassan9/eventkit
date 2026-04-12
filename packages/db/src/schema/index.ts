@@ -57,3 +57,9 @@ export {
   orderItemsRelations,
   orderPaymentStatusEnum,
 } from "./orders";
+
+export {
+  waitlistEntries,
+  waitlistEntriesRelations,
+  waitlistStatusEnum,
+} from "./waitlist-entries";

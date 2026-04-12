@@ -29,6 +29,7 @@ import {
   useUpdateTicketType,
   useDuplicateTicketType,
 } from "@/hooks/use-ticket-types";
+import { useWaitlistCounts } from "@/hooks/use-waitlist";
 import { DataTableToolbar } from "@/components/dashboard/data-table-toolbar";
 import { useDebouncedValue } from "@/hooks/use-debounce";
 import { TicketDialog } from "./ticket-dialog";
@@ -64,9 +65,18 @@ function getTicketStatus(ticket: TicketType) {
 
 export function TicketsClient({ eventId }: TicketsClientProps) {
   const { data: tickets, isLoading, error } = useTicketTypes(eventId);
+  const { data: waitlistCounts } = useWaitlistCounts(eventId);
   const deleteMutation = useDeleteTicketType();
   const updateMutation = useUpdateTicketType();
   const duplicateMutation = useDuplicateTicketType();
+
+  // Build a map of ticketTypeId -> waitlist count
+  const waitlistCountMap: Record<string, number> = {};
+  if (waitlistCounts) {
+    for (const item of waitlistCounts) {
+      waitlistCountMap[item.ticketTypeId] = item.count;
+    }
+  }
 
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingTicketId, setEditingTicketId] = useState<string | null>(null);
@@ -229,6 +239,14 @@ export function TicketsClient({ eventId }: TicketsClientProps) {
                           {ticket.description && (
                             <div className="text-xs text-stone-400 truncate max-w-xs">{ticket.description}</div>
                           )}
+                          {ticket.allowWaitlist &&
+                            ticket.capacity &&
+                            ticket.soldCount >= ticket.capacity &&
+                            (waitlistCountMap[ticket.id] ?? 0) > 0 && (
+                              <div className="text-xs text-amber-600">
+                                {waitlistCountMap[ticket.id]} on waitlist
+                              </div>
+                            )}
                         </td>
                         <td className="px-3 py-2.5">
                           {ticket.price === 0 ? (

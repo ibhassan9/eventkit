@@ -2,14 +2,18 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useCallback } from "react";
+import { toast } from "sonner";
 import { Button } from "@eventkit/ui/button";
 import { Input } from "@eventkit/ui/input";
+import { Checkbox } from "@eventkit/ui/checkbox";
 import { Search, Download, ChevronLeft, ChevronRight, UserPlus } from "lucide-react";
 import { AttendeeSheet } from "./attendee-sheet";
 import { AddAttendeeDialog } from "./add-attendee-dialog";
 import { AttendeeFilters } from "./attendee-filters";
 import { AttendeesTableRows } from "./attendees-table-rows";
+import { BulkActionBar } from "./bulk-action-bar";
 import { exportAttendeesToCsv } from "./export-csv";
+import { exportAllAttendees } from "./export-action";
 import type { CustomField } from "@eventkit/types";
 
 interface Attendee {
@@ -20,6 +24,8 @@ interface Attendee {
   company: string | null;
   paymentStatus: "pending" | "paid" | "free" | "refunded";
   checkedInAt: Date | null;
+  cancelledAt: Date | null;
+  amountPaid: number | null;
   createdAt: Date;
   ticketTypeId: string | null;
   jobTitle: string | null;
@@ -38,7 +44,7 @@ interface AttendeesTableProps {
   eventId: string;
   currentPage: number;
   hasMore: boolean;
-  filters: { search: string; status: string; ticketType: string; checkedIn: string };
+  filters: { search: string; status: string; ticketType: string; checkedIn: string; showCancelled: string };
   customFields: CustomField[];
 }
 
@@ -49,6 +55,8 @@ export function AttendeesTable(props: AttendeesTableProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [addSheetOpen, setAddSheetOpen] = useState(false);
   const [searchValue, setSearchValue] = useState(filters.search);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [exportingAll, setExportingAll] = useState(false);
 
   const ticketTypeMap = Object.fromEntries(ticketTypes.map((tt) => [tt.id, tt.name]));
 
@@ -91,7 +99,36 @@ export function AttendeesTable(props: AttendeesTableProps) {
               <UserPlus className="mr-1.5 h-3.5 w-3.5" />Add Attendee
             </Button>
             <Button variant="outline" size="sm" onClick={() => exportAttendeesToCsv(attendees, ticketTypeMap, eventId)}>
-              <Download className="mr-1.5 h-3.5 w-3.5" />Export CSV
+              <Download className="mr-1.5 h-3.5 w-3.5" />Export Page
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={exportingAll}
+              onClick={async () => {
+                setExportingAll(true);
+                try {
+                  const result = await exportAllAttendees({ eventId });
+                  if (result.success && result.data) {
+                    const blob = new Blob([result.data], { type: "text/csv" });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement("a");
+                    link.href = url;
+                    link.download = `attendees-all-${eventId}.csv`;
+                    link.click();
+                    URL.revokeObjectURL(url);
+                    toast.success("Export complete");
+                  } else {
+                    toast.error(result.success ? "No data" : result.error);
+                  }
+                } catch {
+                  toast.error("Failed to export attendees");
+                } finally {
+                  setExportingAll(false);
+                }
+              }}
+            >
+              <Download className="mr-1.5 h-3.5 w-3.5" />Export All
             </Button>
           </div>
         </div>
@@ -101,12 +138,37 @@ export function AttendeesTable(props: AttendeesTableProps) {
             <table className="w-full caption-bottom text-sm">
               <thead>
                 <tr className="border-b bg-stone-50">
+                  <th className="h-10 w-10 px-3">
+                    <Checkbox
+                      checked={attendees.length > 0 && attendees.every((a) => selectedIds.has(a.id))}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedIds(new Set(attendees.map((a) => a.id)));
+                        } else {
+                          setSelectedIds(new Set());
+                        }
+                      }}
+                    />
+                  </th>
                   {["Name", "Email", "Company", "Ticket", "Payment", "Checked In", "Date"].map((h) => (
                     <th key={h} className="h-10 px-3 text-left font-medium">{h}</th>
                   ))}
                 </tr>
               </thead>
-              <AttendeesTableRows attendees={attendees} ticketTypeMap={ticketTypeMap} onSelectAttendee={setSelectedId} />
+              <AttendeesTableRows
+                attendees={attendees}
+                ticketTypeMap={ticketTypeMap}
+                onSelectAttendee={setSelectedId}
+                selectedIds={selectedIds}
+                onToggleSelection={(id) =>
+                  setSelectedIds((prev) => {
+                    const next = new Set(prev);
+                    if (next.has(id)) next.delete(id);
+                    else next.add(id);
+                    return next;
+                  })
+                }
+              />
             </table>
           </div>
           {(currentPage > 1 || hasMore) && (
@@ -121,6 +183,17 @@ export function AttendeesTable(props: AttendeesTableProps) {
             </div>
           )}
         </div>
+        {selectedIds.size > 0 && (
+          <BulkActionBar
+            selectedCount={selectedIds.size}
+            selectedIds={selectedIds}
+            attendees={attendees}
+            ticketTypeMap={ticketTypeMap}
+            eventId={eventId}
+            customFields={customFields}
+            onClear={() => setSelectedIds(new Set())}
+          />
+        )}
       </div>
       {selected && (
         <AttendeeSheet

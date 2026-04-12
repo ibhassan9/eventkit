@@ -39,6 +39,8 @@ export default async function PublicEventPage({ params }: PageProps) {
   const event = await getEvent(slug);
   if (!event) notFound();
 
+  if (event.status === "draft") notFound();
+
   const config: WebsiteConfig = event.websiteConfig ?? defaultWebsiteConfig(event.name);
   const resolved = resolveTheme(event);
 

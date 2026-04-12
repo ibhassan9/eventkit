@@ -63,4 +63,13 @@ export const queryKeys = {
     list: (eventId: string) =>
       [...queryKeys.speakers.all, "list", eventId] as const,
   },
+  waitlist: {
+    all: ["waitlist"] as const,
+    list: (eventId: string) =>
+      [...queryKeys.waitlist.all, "list", eventId] as const,
+    stats: (eventId: string) =>
+      [...queryKeys.waitlist.all, "stats", eventId] as const,
+    counts: (eventId: string) =>
+      [...queryKeys.waitlist.all, "counts", eventId] as const,
+  },
 };

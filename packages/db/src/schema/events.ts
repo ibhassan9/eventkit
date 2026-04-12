@@ -17,6 +17,7 @@ import { badgeTemplates } from "./badge-templates";
 import { sessions } from "./sessions";
 import { speakers } from "./speakers";
 import { orders } from "./orders";
+import { waitlistEntries } from "./waitlist-entries";
 import type { RegistrationConfig, WebsiteConfig, WebsitePages } from "@eventkit/types";
 
 export const eventStatusEnum = pgEnum("event_status", [
@@ -69,4 +70,5 @@ export const eventsRelations = relations(events, ({ one, many }) => ({
   sessions: many(sessions),
   speakers: many(speakers),
   orders: many(orders),
+  waitlistEntries: many(waitlistEntries),
 }));

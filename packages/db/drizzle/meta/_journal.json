@@ -36,6 +36,13 @@
       "when": 1775935637041,
       "tag": "0004_numerous_madelyne_pryor",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1775978355026,
+      "tag": "0005_free_nick_fury",
+      "breakpoints": true
     }
   ]
 }

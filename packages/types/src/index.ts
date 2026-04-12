@@ -167,6 +167,8 @@ export interface MergeTag {
 
 export type SpeakerRole = "speaker" | "moderator" | "panelist";
 
+export type WaitlistStatus = "waiting" | "offered" | "accepted" | "expired" | "cancelled";
+
 export interface WebsitePages {
   pages: {
     home: {

@@ -6,6 +6,7 @@ import {
   createCheckoutSchema,
   registerCartSchema,
 } from "@eventkit/lib/validators";
+import { joinWaitlistSchema } from "@eventkit/lib/validators";
 import {
   getEventById,
   getTicketTypeById,
@@ -15,6 +16,9 @@ import {
   createAttendee,
   updateAttendee,
   createOrderWithItems,
+  getWaitlistEntryByEmailAndTicketType,
+  getNextWaitlistPosition,
+  createWaitlistEntry,
 } from "@eventkit/db/queries";
 import { generateQRCode } from "@eventkit/lib/qr";
 import { sendEmail } from "@eventkit/lib/resend";
@@ -23,6 +27,7 @@ import { checkRateLimit } from "@eventkit/lib/rate-limit";
 import { generateTemporaryPassword } from "@eventkit/lib/utils";
 import { ConfirmationEmail } from "@eventkit/emails/confirmation";
 import { WelcomeAttendeeEmail } from "@eventkit/emails/welcome-attendee";
+import { WaitlistConfirmationEmail } from "@eventkit/emails";
 import { createAdminClient, getAuthUserIdByEmail } from "@eventkit/lib/supabase/admin";
 import { createServerSupabaseClient } from "@eventkit/lib/supabase/server";
 import { checkCapacity } from "./check-capacity";
@@ -566,5 +571,82 @@ export const createCartCheckout = createPublicAction(
     });
 
     return { checkoutUrl: session.url };
+  }
+);
+
+// --- Waitlist ---
+
+export const joinWaitlist = createPublicAction(
+  joinWaitlistSchema,
+  async (input) => {
+    const rateCheck = checkRateLimit(`waitlist:${input.email}`, 5, 60_000);
+    if (!rateCheck.allowed) {
+      throw new Error("Too many attempts. Please try again later.");
+    }
+
+    const ticketType = await getTicketTypeById(input.ticketTypeId);
+    if (!ticketType) throw new Error("Ticket type not found");
+    if (!ticketType.allowWaitlist) throw new Error("Waitlist not enabled for this ticket");
+    if (
+      !ticketType.capacity ||
+      ticketType.soldCount < ticketType.capacity
+    ) {
+      throw new Error(
+        "Tickets are still available — no need to join the waitlist"
+      );
+    }
+
+    // Check for duplicate waitlist entry
+    const existing = await getWaitlistEntryByEmailAndTicketType(
+      input.email.toLowerCase(),
+      input.ticketTypeId
+    );
+    if (existing) {
+      throw new Error("You're already on the waitlist for this ticket");
+    }
+
+    // Check if already registered
+    const existingAttendee = await getAttendeeByEmail(
+      input.email,
+      ticketType.eventId
+    );
+    if (existingAttendee && !existingAttendee.cancelledAt) {
+      throw new Error("You're already registered for this event");
+    }
+
+    // Get next position and create entry
+    const position = await getNextWaitlistPosition(input.ticketTypeId);
+    const entry = await createWaitlistEntry({
+      eventId: input.eventId,
+      ticketTypeId: input.ticketTypeId,
+      firstName: input.firstName,
+      lastName: input.lastName,
+      email: input.email.toLowerCase(),
+      position,
+    });
+
+    // Send confirmation email
+    const event = await getEventById(input.eventId);
+    if (event) {
+      try {
+        await sendEmail({
+          to: input.email.toLowerCase(),
+          subject: `You're on the waitlist for ${event.name}`,
+          react: WaitlistConfirmationEmail({
+            attendeeName: `${input.firstName} ${input.lastName}`,
+            eventName: event.name,
+            eventDate: event.startDate.toISOString(),
+            venue: event.venue ?? undefined,
+            ticketType: ticketType.name,
+            position,
+            eventSlug: event.slug,
+          }),
+        });
+      } catch {
+        // Email failure should not block waitlist join
+      }
+    }
+
+    return { entryId: entry.id, position };
   }
 );

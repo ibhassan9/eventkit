@@ -10,6 +10,7 @@ import { registerFree, createCheckout, registerFreeCart, createCartCheckout } fr
 import { TicketCart } from "./ticket-cart";
 import { OrderSummary } from "./order-summary";
 import { AttendeeDetails } from "./attendee-details";
+import { WaitlistModal } from "./waitlist-modal";
 
 interface TicketType {
   id: string;
@@ -52,6 +53,10 @@ export function RegistrationForm({
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [customValues, setCustomValues] = useState<Record<string, string>>({});
+  const [waitlistTicket, setWaitlistTicket] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   const cartItems = ticketTypes
     .filter((t) => (cart[t.id] ?? 0) > 0)
@@ -143,6 +148,7 @@ export function RegistrationForm({
         onCartChange={handleCartChange}
         currency={currency}
         primaryColor={secondaryColor}
+        onJoinWaitlist={(id, name) => setWaitlistTicket({ id, name })}
       />
 
       {totalQuantity > 0 && (
@@ -176,6 +182,19 @@ export function RegistrationForm({
             ? "Complete Registration"
             : `Continue to Payment — ${formatCurrency(totalAmount, currency)}`}
       </Button>
+
+      {waitlistTicket && (
+        <WaitlistModal
+          open={!!waitlistTicket}
+          onOpenChange={(open) => {
+            if (!open) setWaitlistTicket(null);
+          }}
+          ticketTypeId={waitlistTicket.id}
+          ticketTypeName={waitlistTicket.name}
+          eventId={eventId}
+          eventSlug={eventSlug}
+        />
+      )}
     </form>
   );
 }

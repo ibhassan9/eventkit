@@ -81,3 +81,18 @@ export async function constructWebhookEvent(
     process.env.STRIPE_WEBHOOK_SECRET!
   );
 }
+
+export async function createRefund(params: {
+  paymentIntentId: string;
+  amount?: number;
+  reverseTransfer?: boolean;
+  refundApplicationFee?: boolean;
+}) {
+  const stripe = getStripe();
+  return stripe.refunds.create({
+    payment_intent: params.paymentIntentId,
+    ...(params.amount ? { amount: params.amount } : {}),
+    reverse_transfer: params.reverseTransfer ?? true,
+    refund_application_fee: params.refundApplicationFee ?? true,
+  });
+}

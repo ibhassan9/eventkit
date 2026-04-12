@@ -11,7 +11,14 @@ import {
   getAttendeesByUserId,
   createAttendee,
   updateAttendee,
+  getOrdersByAttendeeId,
+  updateOrderPaymentStatus,
+  decrementTicketSoldCount,
+  getNextWaitingEntry,
+  offerWaitlistSpot,
+  getTicketTypeById,
 } from "@eventkit/db/queries";
+import { createRefund } from "@eventkit/lib/stripe";
 import {
   createAdminClient,
   getAuthUserIdByEmail,
@@ -237,5 +244,103 @@ export const getAttendeeOtherEvents = createSafeAction(
 
     const attendeeRecords = await getAttendeesByUserId(input.userId);
     return attendeeRecords.filter((a) => a.eventId !== input.eventId);
+  }
+);
+
+export const cancelAttendeeAction = createSafeAction(
+  z.object({
+    eventId: z.string().uuid(),
+    attendeeId: z.string().uuid(),
+    issueRefund: z.boolean().default(false),
+  }),
+  async (input, ctx) => {
+    const event = await getEventById(input.eventId);
+    if (!event || event.organizationId !== ctx.organizationId) {
+      throw new Error("Event not found");
+    }
+
+    const attendee = await getAttendeeById(input.attendeeId);
+    if (!attendee || attendee.eventId !== input.eventId) {
+      throw new Error("Attendee not found");
+    }
+    if (attendee.cancelledAt) {
+      throw new Error("Already cancelled");
+    }
+
+    // Process refund if requested
+    if (input.issueRefund && attendee.paymentStatus === "paid") {
+      const orders = await getOrdersByAttendeeId(attendee.id);
+      for (const order of orders) {
+        if (order.paymentStatus === "paid" && order.stripePaymentIntentId) {
+          await createRefund({
+            paymentIntentId: order.stripePaymentIntentId,
+          });
+          await updateOrderPaymentStatus(order.id, {
+            paymentStatus: "refunded",
+            refundedAmount: order.totalAmount,
+          });
+        }
+      }
+    }
+
+    // Soft-delete attendee
+    await updateAttendee(input.attendeeId, { cancelledAt: new Date() });
+
+    // Decrement sold counts
+    if (attendee.ticketTypeId) {
+      await decrementTicketSoldCount(attendee.ticketTypeId, 1);
+
+      // Check waitlist auto-offer
+      const ticketType = await getTicketTypeById(attendee.ticketTypeId);
+      if (ticketType?.allowWaitlist) {
+        const nextEntry = await getNextWaitingEntry(attendee.ticketTypeId);
+        if (nextEntry) {
+          await offerWaitlistSpot(nextEntry.id, 48);
+        }
+      }
+    }
+
+    revalidatePath(`/events/${input.eventId}/attendees`);
+  }
+);
+
+export const bulkCancelAttendeesAction = createSafeAction(
+  z.object({
+    eventId: z.string().uuid(),
+    attendeeIds: z.array(z.string().uuid()),
+    issueRefunds: z.boolean().default(false),
+  }),
+  async (input, ctx) => {
+    const event = await getEventById(input.eventId);
+    if (!event || event.organizationId !== ctx.organizationId) {
+      throw new Error("Event not found");
+    }
+
+    let cancelled = 0;
+    let refunded = 0;
+    const errors: string[] = [];
+
+    for (const attendeeId of input.attendeeIds) {
+      try {
+        const result = await cancelAttendeeAction({
+          eventId: input.eventId,
+          attendeeId,
+          issueRefund: input.issueRefunds,
+        });
+        if (result.success) {
+          cancelled++;
+          if (input.issueRefunds) refunded++;
+        } else {
+          errors.push(`${attendeeId}: ${result.error}`);
+        }
+      } catch (e) {
+        errors.push(
+          `${attendeeId}: ${e instanceof Error ? e.message : "Unknown error"}`
+        );
+      }
+    }
+
+    revalidatePath(`/events/${input.eventId}/attendees`);
+    return { cancelled, refunded, errors };
   }
 );

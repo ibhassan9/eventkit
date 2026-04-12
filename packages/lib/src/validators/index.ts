@@ -9,3 +9,4 @@ export * from "./website-pages";
 export * from "./registration-config";
 export * from "./users";
 export * from "./orders";
+export * from "./waitlist";

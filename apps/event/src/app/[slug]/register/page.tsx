@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
+import { XCircle, CheckCircle } from "lucide-react";
 import { getEventBySlug, getTicketTypesByEventId } from "@eventkit/db/queries";
 import { getAttendeeUser, getAttendeeForEvent } from "@/lib/attendee-auth";
 import { RegistrationForm } from "./registration-form";
@@ -23,6 +24,38 @@ export default async function RegisterPage({ params }: PageProps) {
   const { slug } = await params;
   const event = await getEventBySlug(slug);
   if (!event) notFound();
+
+  if (event.status === "cancelled") {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center px-6">
+        <XCircle className="h-12 w-12 text-red-400 mb-4" />
+        <h1 className="text-2xl font-bold tracking-tight text-zinc-900">
+          Event Cancelled
+        </h1>
+        <p className="mt-2 text-sm text-zinc-500">
+          This event has been cancelled. Registration is no longer available.
+        </p>
+      </div>
+    );
+  }
+
+  if (event.status === "completed") {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center px-6">
+        <CheckCircle className="h-12 w-12 text-zinc-400 mb-4" />
+        <h1 className="text-2xl font-bold tracking-tight text-zinc-900">
+          Registration Closed
+        </h1>
+        <p className="mt-2 text-sm text-zinc-500">
+          Registration for this event has closed.
+        </p>
+      </div>
+    );
+  }
+
+  if (event.status === "draft") {
+    notFound();
+  }
 
   const attendeeUser = await getAttendeeUser();
   if (attendeeUser) {

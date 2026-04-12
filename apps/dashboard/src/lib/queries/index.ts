@@ -9,3 +9,8 @@ export { fetchWebsitePages } from "./website-pages";
 export { fetchRegistrationConfig } from "./registration";
 export { fetchSessions } from "./sessions";
 export { fetchSpeakers } from "./speakers";
+export {
+  fetchWaitlistEntries,
+  fetchWaitlistStats,
+  fetchWaitlistCounts,
+} from "./waitlist";

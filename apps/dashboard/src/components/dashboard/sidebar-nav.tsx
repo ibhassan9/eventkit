@@ -16,6 +16,7 @@ import {
   ClipboardCheck,
   TicketIcon,
   Tag,
+  ListOrdered,
   ArrowLeft,
 } from "lucide-react";
 
@@ -34,6 +35,7 @@ const eventNavItems = [
   { href: "/emails", label: "Emails", icon: Mail },
   { href: "/badges", label: "Badges", icon: BadgeCheck },
   { href: "/attendees", label: "Attendees", icon: Users },
+  { href: "/waitlist", label: "Waitlist", icon: ListOrdered },
   { href: "/checkin", label: "Check-in", icon: ClipboardCheck },
 ];
 

@@ -10,6 +10,7 @@ interface AttendeeFilters {
   status?: string;
   ticketType?: string;
   checkedIn?: string;
+  showCancelled?: string;
   page?: number;
   pageSize?: number;
 }
@@ -21,6 +22,7 @@ export function useAttendees(eventId: string, filters: AttendeeFilters = {}) {
       status: filters.status,
       ticketType: filters.ticketType,
       checkedIn: filters.checkedIn,
+      showCancelled: filters.showCancelled,
       page: filters.page,
     }),
     queryFn: () =>
@@ -30,6 +32,7 @@ export function useAttendees(eventId: string, filters: AttendeeFilters = {}) {
         status: filters.status,
         ticketType: filters.ticketType,
         checkedIn: (filters.checkedIn as "true" | "false" | "") || undefined,
+        showCancelled: (filters.showCancelled as "true" | "") || undefined,
         page: filters.page,
         pageSize: filters.pageSize,
       }).then(unwrapAction),
