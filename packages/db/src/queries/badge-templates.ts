@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { db } from "../client";
 import { badgeTemplates } from "../schema";
-import type { BadgeConfig } from "@eventkit/types";
+import type { AnyBadgeConfig } from "@eventkit/types";
 
 export async function getBadgeTemplatesByEventId(eventId: string) {
   return db.query.badgeTemplates.findMany({
@@ -18,7 +18,7 @@ export async function getBadgeTemplateById(id: string) {
 export async function createBadgeTemplate(data: {
   eventId: string;
   name: string;
-  config: BadgeConfig;
+  config: AnyBadgeConfig;
   isDefault?: boolean;
 }) {
   const [template] = await db
@@ -32,7 +32,7 @@ export async function updateBadgeTemplate(
   id: string,
   data: Partial<{
     name: string;
-    config: BadgeConfig;
+    config: AnyBadgeConfig;
     isDefault: boolean;
   }>
 ) {

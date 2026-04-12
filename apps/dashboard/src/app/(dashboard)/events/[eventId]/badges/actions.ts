@@ -10,6 +10,7 @@ import {
   getEventById,
 } from "@eventkit/db/queries";
 
+// V1 field schema (legacy)
 const badgeFieldSchema = z.object({
   id: z.string(),
   type: z.enum([
@@ -30,7 +31,8 @@ const badgeFieldSchema = z.object({
   textAlign: z.enum(["left", "center", "right"]),
 });
 
-const badgeConfigSchema = z.object({
+// V1 config schema (legacy)
+const badgeConfigV1Schema = z.object({
   width: z.number().int().positive(),
   height: z.number().int().positive(),
   preset: z.enum(["minimal", "corporate", "bold", "modern"]),
@@ -43,6 +45,56 @@ const badgeConfigSchema = z.object({
   qrCodeSize: z.number().positive(),
   logoUrl: z.string().optional(),
 });
+
+// V2 element schema
+const badgeElementSchema = z.object({
+  id: z.string(),
+  type: z.enum(["text", "image", "qr", "shape", "line"]),
+  x: z.number(),
+  y: z.number(),
+  width: z.number(),
+  height: z.number(),
+  rotation: z.number(),
+  zIndex: z.number(),
+  locked: z.boolean(),
+  visible: z.boolean(),
+  // Text-specific
+  text: z.string().optional(),
+  mergeField: z.string().optional(),
+  fontFamily: z.string().optional(),
+  fontSize: z.number().optional(),
+  fontWeight: z.number().optional(),
+  fontColor: z.string().optional(),
+  textAlign: z.enum(["left", "center", "right"]).optional(),
+  lineHeight: z.number().optional(),
+  letterSpacing: z.number().optional(),
+  // Image-specific
+  src: z.string().optional(),
+  opacity: z.number().optional(),
+  cornerRadius: z.number().optional(),
+  // QR-specific
+  qrForeground: z.string().optional(),
+  qrBackground: z.string().optional(),
+  // Shape-specific
+  shapeType: z.enum(["rect", "roundedRect", "circle"]).optional(),
+  fill: z.string().optional(),
+  stroke: z.string().optional(),
+  strokeWidth: z.number().optional(),
+  dashPattern: z.array(z.number()).optional(),
+});
+
+// V2 config schema
+const badgeConfigV2Schema = z.object({
+  version: z.literal(2),
+  width: z.number().positive(),
+  height: z.number().positive(),
+  dpi: z.number().positive(),
+  backgroundColor: z.string(),
+  elements: z.array(badgeElementSchema),
+});
+
+// Accept either V1 or V2
+const badgeConfigSchema = z.union([badgeConfigV1Schema, badgeConfigV2Schema]);
 
 const saveSchema = z.object({
   eventId: z.string().uuid(),

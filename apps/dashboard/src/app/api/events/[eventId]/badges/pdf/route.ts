@@ -6,7 +6,9 @@ import {
   getAttendeesByEventId,
   getOrganizationByClerkUserId,
 } from "@eventkit/db/queries";
-import { generateBadgePdf } from "@eventkit/lib/badges/generate-pdf";
+import { migrateBadgeConfig } from "@eventkit/lib/badges/migrate-config";
+import { generateBadgePdfV2 } from "@eventkit/lib/badges/generate-pdf-v2";
+import type { AnyBadgeConfig } from "@eventkit/types";
 
 export async function GET(
   request: NextRequest,
@@ -55,11 +57,10 @@ export async function GET(
     );
   }
 
-  const pdfBuffer = await generateBadgePdf(
-    template.config,
-    attendees,
-    event
-  );
+  // Migrate V1 configs to V2 on the fly
+  const config = migrateBadgeConfig(template.config as AnyBadgeConfig);
+
+  const pdfBuffer = await generateBadgePdfV2(config, attendees, event);
 
   return new NextResponse(new Uint8Array(pdfBuffer), {
     headers: {

@@ -1,4 +1,4 @@
-import type { BadgeConfig, BadgeField } from "@eventkit/types";
+import type { BadgeConfig, BadgeField, BadgeElement } from "@eventkit/types";
 
 export interface PdfAttendee {
   firstName: string;
@@ -30,6 +30,22 @@ export function getFieldValue(field: BadgeField, attendee: PdfAttendee): string 
     case "custom":
       return field.label ?? "";
   }
+}
+
+export function resolveMergeField(
+  field: string,
+  attendee: PdfAttendee
+): string {
+  const map: Record<string, string> = {
+    "{{firstName}}": attendee.firstName,
+    "{{lastName}}": attendee.lastName,
+    "{{fullName}}": `${attendee.firstName} ${attendee.lastName}`,
+    "{{email}}": "",
+    "{{company}}": attendee.company ?? "",
+    "{{jobTitle}}": attendee.jobTitle ?? "",
+    "{{ticketType}}": attendee.ticketType?.name ?? "",
+  };
+  return map[field] ?? field;
 }
 
 export function getQrPosition(

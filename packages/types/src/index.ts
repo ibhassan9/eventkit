@@ -95,7 +95,7 @@ export interface BadgeField {
   textAlign: "left" | "center" | "right";
 }
 
-export interface BadgeConfig {
+export interface BadgeConfigV1 {
   width: number;
   height: number;
   preset: "minimal" | "corporate" | "bold" | "modern";
@@ -108,6 +108,56 @@ export interface BadgeConfig {
   qrCodeSize: number;
   logoUrl?: string;
 }
+
+/** @deprecated Use BadgeConfigV2 for new code */
+export type BadgeConfig = BadgeConfigV1;
+
+export interface BadgeElement {
+  id: string;
+  type: "text" | "image" | "qr" | "shape" | "line";
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation: number;
+  zIndex: number;
+  locked: boolean;
+  visible: boolean;
+  // Text-specific
+  text?: string;
+  mergeField?: string;
+  fontFamily?: string;
+  fontSize?: number;
+  fontWeight?: number;
+  fontColor?: string;
+  textAlign?: "left" | "center" | "right";
+  lineHeight?: number;
+  letterSpacing?: number;
+  // Image-specific
+  src?: string;
+  opacity?: number;
+  cornerRadius?: number;
+  // QR-specific
+  qrForeground?: string;
+  qrBackground?: string;
+  // Shape-specific
+  shapeType?: "rect" | "roundedRect" | "circle";
+  fill?: string;
+  stroke?: string;
+  strokeWidth?: number;
+  dashPattern?: number[];
+}
+
+export interface BadgeConfigV2 {
+  version: 2;
+  width: number;
+  height: number;
+  dpi: number;
+  backgroundColor: string;
+  elements: BadgeElement[];
+}
+
+export type AnyBadgeConfig = BadgeConfigV1 | BadgeConfigV2;
 
 export interface MergeTag {
   key: string;

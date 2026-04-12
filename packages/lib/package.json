@@ -52,6 +52,14 @@
       "types": "./src/badges/generate-pdf.tsx",
       "default": "./src/badges/generate-pdf.tsx"
     },
+    "./badges/generate-pdf-v2": {
+      "types": "./src/badges/generate-pdf-v2.tsx",
+      "default": "./src/badges/generate-pdf-v2.tsx"
+    },
+    "./badges/migrate-config": {
+      "types": "./src/badges/migrate-config.ts",
+      "default": "./src/badges/migrate-config.ts"
+    },
     "./validators": {
       "types": "./src/validators/index.ts",
       "default": "./src/validators/index.ts"

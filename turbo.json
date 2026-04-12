@@ -5,7 +5,12 @@
       "dependsOn": ["^build"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"]
     },
+    "db:migrate": {
+      "cache": false,
+      "env": ["DATABASE_URL"]
+    },
     "dev": {
+      "dependsOn": ["@eventkit/db#db:migrate"],
       "cache": false,
       "persistent": true
     },

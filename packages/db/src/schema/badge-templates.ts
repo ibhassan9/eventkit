@@ -9,7 +9,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { events } from "./events";
-import type { BadgeConfig } from "@eventkit/types";
+import type { AnyBadgeConfig } from "@eventkit/types";
 
 export const badgeTemplates = pgTable(
   "badge_templates",
@@ -19,7 +19,7 @@ export const badgeTemplates = pgTable(
       .notNull()
       .references(() => events.id, { onDelete: "cascade" }),
     name: text().notNull(),
-    config: jsonb().notNull().$type<BadgeConfig>(),
+    config: jsonb().notNull().$type<AnyBadgeConfig>(),
     isDefault: boolean().notNull().default(false),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
